@@ -201,9 +201,10 @@ function diagnose(){
  document.getElementById('result').classList.add('show');
  document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
+  document.getElementById("versionInfo").textContent =
+  "Version " + APP_VERSION.version +
+  "｜料金情報確認日：" + APP_VERSION.priceCheckedAt;
+
 </script>
 </body>
 </html>
-document.getElementById("versionInfo").textContent =
-  "Version " + APP_VERSION.version +
-  "｜料金情報確認日：" + APP_VERSION.priceCheckedAt;
