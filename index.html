@@ -3,1107 +3,214 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>搾取判定 — スマホ料金1秒診断</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<title>あなたに合う料金プラン診断</title>
+<meta name="description" content="スマホの使い方から、あなたに合う料金プランと見直し余地を約30秒で診断します。">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0a0f0d;
-    --bg2: #111810;
-    --bg3: #161e18;
-    --card: #1a2420;
-    --card2: #1f2d28;
-    --border: rgba(100,255,160,0.08);
-    --border2: rgba(100,255,160,0.18);
-    --green: #3dffa0;
-    --green2: #22c97a;
-    --green3: #0f7a48;
-    --green-dim: rgba(61,255,160,0.12);
-    --amber: #f5c842;
-    --red: #ff6b6b;
-    --text: #e8f5ef;
-    --text2: #8aaa98;
-    --text3: #4a6558;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Noto Sans JP', sans-serif;
-    --radius: 14px;
-    --radius-sm: 8px;
-  }
-
-  html { font-size: 16px; scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Grid bg */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(61,255,160,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(61,255,160,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .app { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-
-  /* Header */
-  header { text-align: center; padding: 2.5rem 0 3rem; }
-  .logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
-  .logo-mark {
-    width: 44px; height: 44px;
-    background: var(--green);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--mono); font-weight: 500; font-size: 18px;
-    color: #0a0f0d;
-  }
-  .logo-name { font-family: var(--mono); font-size: 1.5rem; font-weight: 500; letter-spacing: -0.5px; color: var(--text); }
-  .logo-name em { color: var(--green); font-style: normal; }
-  .header-copy { font-size: 0.95rem; color: var(--text2); line-height: 1.7; }
-  .header-copy strong { color: var(--text); font-weight: 500; }
-
-  /* Step indicator */
-  .steps { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 2.5rem; }
-  .step-dot {
-    display: flex; align-items: center; gap: 0;
-  }
-  .dot {
-    width: 32px; height: 32px; border-radius: 50%;
-    border: 1.5px solid var(--border2);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--mono); font-size: 12px; color: var(--text3);
-    transition: all 0.3s ease;
-  }
-  .dot.active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-  .dot.done { border-color: var(--green3); background: var(--green3); color: var(--bg); }
-  .step-line { width: 48px; height: 1px; background: var(--border2); margin: 0 4px; }
-  .step-line.done { background: var(--green3); }
-
-  /* Sections */
-  .section { display: none; animation: fadeUp 0.4s ease both; }
-  .section.active { display: block; }
-  @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-
-  .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
-  .section-sub { font-size: 0.82rem; color: var(--text2); margin-bottom: 1.75rem; }
-
-  /* Card */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1rem;
-  }
-  .card-label {
-    font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em;
-    color: var(--green); text-transform: uppercase; margin-bottom: 0.75rem;
-  }
-
-  /* Slider rows */
-  .slider-group { display: flex; flex-direction: column; gap: 1.25rem; }
-  .slider-row { display: flex; flex-direction: column; gap: 8px; }
-  .slider-header { display: flex; justify-content: space-between; align-items: baseline; }
-  .slider-label { font-size: 0.88rem; color: var(--text2); }
-  .slider-val {
-    font-family: var(--mono); font-size: 1rem; font-weight: 500; color: var(--green);
-    min-width: 80px; text-align: right;
-  }
-  input[type=range] {
-    -webkit-appearance: none; appearance: none;
-    width: 100%; height: 4px;
-    background: var(--border2); border-radius: 2px; outline: none;
-    cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--green);
-    border: 3px solid var(--bg);
-    box-shadow: 0 0 0 1px var(--green);
-    cursor: pointer;
-  }
-  input[type=range]::-moz-range-thumb {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--green);
-    border: 3px solid var(--bg);
-    cursor: pointer;
-  }
-
-  /* Toggle pills */
-  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; }
-  .pill {
-    padding: 6px 14px; border-radius: 20px; font-size: 0.8rem;
-    border: 1px solid var(--border2); background: transparent;
-    color: var(--text2); cursor: pointer;
-    transition: all 0.2s ease; font-family: var(--sans);
-  }
-  .pill:hover { border-color: var(--green2); color: var(--text); }
-  .pill.on { background: var(--green-dim); border-color: var(--green); color: var(--green); }
-
-  /* Primary button */
-  .btn-primary {
-    display: block; width: 100%; padding: 14px;
-    background: var(--green); border: none; border-radius: var(--radius-sm);
-    font-family: var(--sans); font-size: 0.95rem; font-weight: 700;
-    color: #0a0f0d; cursor: pointer; margin-top: 1.5rem;
-    transition: all 0.2s ease; letter-spacing: 0.01em;
-  }
-  .btn-primary:hover { background: #5fffb3; transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-  .btn-back {
-    background: transparent; border: 1px solid var(--border2);
-    border-radius: var(--radius-sm); padding: 10px 20px;
-    color: var(--text2); cursor: pointer; font-family: var(--sans);
-    font-size: 0.85rem; margin-top: 0.75rem; transition: all 0.2s;
-  }
-  .btn-back:hover { border-color: var(--border2); color: var(--text); }
-
-  /* Loading */
-  .loading-box { text-align: center; padding: 3rem 1rem; }
-  .loading-ring {
-    width: 56px; height: 56px; border-radius: 50%;
-    border: 2px solid var(--border2);
-    border-top-color: var(--green);
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 1.25rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.35rem; }
-  .loading-sub { font-size: 0.82rem; color: var(--text2); }
-  .loading-steps { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
-  .ls { font-size: 0.78rem; color: var(--text3); font-family: var(--mono); display: flex; align-items: center; gap: 8px; opacity: 0; transition: opacity 0.4s; }
-  .ls.show { opacity: 1; color: var(--green2); }
-  .ls::before { content: '▶'; font-size: 8px; }
-
-  /* Result */
-  .loss-banner {
-    background: rgba(255,107,107,0.08);
-    border: 1px solid rgba(255,107,107,0.25);
-    border-radius: var(--radius);
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.25rem;
-    display: flex; align-items: center; gap: 1rem;
-  }
-  .loss-icon { font-size: 2rem; flex-shrink: 0; }
-  .loss-text { font-size: 0.82rem; color: #ffaaaa; line-height: 1.6; }
-  .loss-amount { font-family: var(--mono); font-size: 1.5rem; font-weight: 500; color: var(--red); }
-
-  .plan-list { display: flex; flex-direction: column; gap: 10px; }
-  .plan-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.25rem;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .plan-card::before {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: transparent;
-    transition: background 0.2s;
-  }
-  .plan-card:hover { border-color: var(--border2); background: var(--card2); }
-  .plan-card:hover::before { background: var(--green3); }
-  .plan-card.best { border-color: rgba(61,255,160,0.3); background: var(--card2); }
-  .plan-card.best::before { background: var(--green); }
-  .best-badge {
-    position: absolute; top: 0; right: 0;
-    background: var(--green); color: #0a0f0d;
-    font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
-    padding: 3px 10px; border-radius: 0 var(--radius) 0 var(--radius-sm);
-  }
-  .plan-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
-  .plan-carrier { font-size: 0.7rem; color: var(--text3); font-family: var(--mono); margin-bottom: 2px; }
-  .plan-name { font-size: 0.95rem; font-weight: 700; }
-  .plan-price-wrap { text-align: right; }
-  .plan-price { font-family: var(--mono); font-size: 1.3rem; font-weight: 500; color: var(--green); }
-  .plan-price-label { font-size: 0.7rem; color: var(--text3); }
-  .plan-saving { font-family: var(--mono); font-size: 0.78rem; color: var(--amber); margin-top: 2px; }
-  .diff-box {
-    display: flex; align-items: center; justify-content: space-between;
-    background: rgba(61,255,160,0.06); border: 1px solid rgba(61,255,160,0.15);
-    border-radius: 8px; padding: 8px 12px; margin-top: 10px;
-  }
-  .diff-box.worse {
-    background: rgba(255,107,107,0.06); border-color: rgba(255,107,107,0.2);
-  }
-  .diff-label { font-size: 0.72rem; color: var(--text3); }
-  .diff-now { font-family: var(--mono); font-size: 0.82rem; color: var(--text2); }
-  .diff-arrow { font-size: 0.8rem; color: var(--text3); margin: 0 8px; }
-  .diff-new { font-family: var(--mono); font-size: 0.82rem; color: var(--green2); font-weight: 500; }
-  .diff-new.worse { color: var(--red); }
-  .diff-save {
-    font-family: var(--mono); font-size: 1rem; font-weight: 500;
-    color: var(--green); white-space: nowrap;
-  }
-  .diff-save.worse { color: var(--red); }
-  .diff-year { font-size: 0.68rem; color: var(--text3); margin-top: 1px; text-align: right; }
-  .plan-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-  .plan-tag {
-    font-size: 0.68rem; padding: 2px 8px; border-radius: 10px;
-    background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
-  }
-  .plan-tag.warn { background: rgba(245,200,66,0.08); border-color: rgba(245,200,66,0.2); color: var(--amber); }
-  .plan-tag.ok { background: rgba(61,255,160,0.06); border-color: rgba(61,255,160,0.15); color: var(--green2); }
-
-  .plan-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-  .plan-card.open .plan-detail { display: block; }
-  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .detail-item { font-size: 0.78rem; }
-  .detail-item .dk { color: var(--text3); margin-bottom: 2px; }
-  .detail-item .dv { color: var(--text); font-weight: 500; }
-  .detail-btn {
-    display: inline-block; margin-top: 10px; padding: 6px 14px;
-    background: transparent; border: 1px solid var(--green3); border-radius: var(--radius-sm);
-    color: var(--green2); font-size: 0.78rem; cursor: pointer; text-decoration: none;
-    transition: all 0.2s;
-  }
-  .detail-btn:hover { background: var(--green-dim); }
-  .consult-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    margin-top: 8px; margin-left: 8px; padding: 6px 14px;
-    background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.35);
-    border-radius: var(--radius-sm); color: var(--amber);
-    font-size: 0.78rem; cursor: pointer; text-decoration: none;
-    transition: all 0.2s; font-family: var(--sans);
-  }
-  .consult-btn:hover { background: rgba(245,200,66,0.2); }
-  .store-banner {
-    background: linear-gradient(135deg, rgba(245,200,66,0.08), rgba(61,255,160,0.06));
-    border: 1px solid rgba(245,200,66,0.25);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.25rem;
-    margin-bottom: 1rem;
-    display: flex; align-items: center; gap: 1rem;
-  }
-  .store-banner-icon { font-size: 2rem; flex-shrink: 0; }
-  .store-banner-body { flex: 1; }
-  .store-banner-title { font-size: 0.95rem; font-weight: 700; color: var(--amber); margin-bottom: 4px; }
-  .store-banner-desc { font-size: 0.8rem; color: var(--text2); line-height: 1.6; }
-  .store-banner-btn {
-    display: inline-block; margin-top: 8px; padding: 8px 18px;
-    background: var(--amber); border-radius: var(--radius-sm);
-    color: #1a0f00; font-size: 0.82rem; font-weight: 700;
-    text-decoration: none; transition: all 0.2s; white-space: nowrap;
-  }
-  .store-banner-btn:hover { background: #ffd966; }
-  .store-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-  .store-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px; background: var(--bg3);
-    border: 1px solid var(--border); border-radius: var(--radius-sm);
-  }
-  .store-info { flex: 1; }
-  .store-name { font-size: 0.88rem; font-weight: 500; color: var(--text); }
-  .store-addr { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
-  .store-tel { font-family: var(--mono); font-size: 0.82rem; color: var(--green2); }
-  .store-actions { display: flex; gap: 6px; }
-  .store-btn {
-    font-size: 0.72rem; padding: 5px 10px; border-radius: var(--radius-sm);
-    text-decoration: none; transition: all 0.2s; white-space: nowrap;
-  }
-  .store-btn-call { background: var(--green-dim); border: 1px solid var(--green3); color: var(--green2); }
-  .store-btn-map { background: rgba(96,180,255,0.1); border: 1px solid rgba(96,180,255,0.25); color: var(--blue); }
-
-  /* Summary stats */
-  .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
-  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
-  .stat-val { font-family: var(--mono); font-size: 1.15rem; font-weight: 500; color: var(--green); }
-  .stat-label { font-size: 0.68rem; color: var(--text3); margin-top: 2px; }
-
-  .result-section-title { font-size: 0.72rem; font-family: var(--mono); letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin: 1.5rem 0 0.75rem; }
-
-  .reset-btn {
-    display: block; width: 100%; padding: 12px;
-    background: transparent; border: 1px solid var(--border2);
-    border-radius: var(--radius-sm); color: var(--text2);
-    font-family: var(--sans); font-size: 0.85rem; cursor: pointer;
-    margin-top: 1.25rem; transition: all 0.2s;
-  }
-  .reset-btn:hover { border-color: var(--green3); color: var(--text); }
-
-  /* Footer */
-  footer { text-align: center; font-size: 0.72rem; color: var(--text3); margin-top: 3rem; line-height: 1.8; }
-
-  .legal-emblem {
-    position: fixed; bottom: 20px; right: 16px; z-index: 999;
-    background: var(--bg2); border: 1px solid rgba(61,255,160,0.3);
-    border-radius: 50%; width: 72px; height: 72px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; cursor: pointer;
-    box-shadow: 0 0 0 3px rgba(61,255,160,0.08);
-    transition: all 0.2s;
-  }
-  .legal-emblem:hover { box-shadow: 0 0 0 6px rgba(61,255,160,0.15); transform: scale(1.05); }
-  .legal-emblem-icon { font-size: 1.3rem; margin-bottom: 2px; }
-  .legal-emblem-text { font-size: 0.48rem; color: var(--green2); line-height: 1.4; font-weight: 500; letter-spacing: 0.02em; }
-  .emblem-tooltip {
-    position: fixed; bottom: 100px; right: 16px; z-index: 1000;
-    background: var(--card2); border: 1px solid rgba(61,255,160,0.2);
-    border-radius: 10px; padding: 10px 14px; width: 220px;
-    font-size: 0.72rem; color: var(--text2); line-height: 1.7;
-    display: none;
-  }
-  .emblem-tooltip.show { display: block; }
-  .seizure-items { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 1rem 0; }
-  .seizure-item { text-align: center; }
-  .seizure-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
-  .seizure-label { font-size: 0.65rem; color: var(--text2); line-height: 1.4; }
-  .seizure-label span { font-family: var(--mono); color: var(--amber); font-size: 0.7rem; display: block; }
-  .rescue-banner {
-    background: linear-gradient(135deg, rgba(255,107,107,0.1), rgba(61,255,160,0.06));
-    border: 1.5px solid rgba(255,107,107,0.3);
-    border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem;
-  }
-  .rescue-title { font-size: 1rem; font-weight: 700; color: var(--red); margin-bottom: 6px; line-height: 1.5; }
-  .rescue-sub { font-size: 0.82rem; color: var(--text2); line-height: 1.7; margin-bottom: 1rem; }
-  .rescue-slots { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-  .rescue-slot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); }
-  .slot-time { font-family: var(--mono); font-size: 0.82rem; color: var(--green2); }
-  .slot-status { font-size: 0.7rem; color: var(--amber); }
-  .rescue-btn { display: block; width: 100%; padding: 14px; background: var(--red); border: none; border-radius: var(--radius-sm); font-family: var(--sans); font-size: 0.9rem; font-weight: 700; color: white; cursor: pointer; transition: all 0.2s; text-align: center; text-decoration: none; }
-  .rescue-btn:hover { background: #ff8888; }
-
-  @media (max-width: 480px) {
-    .app { padding: 1.5rem 1rem 3rem; }
-    header { padding: 1.5rem 0 2rem; }
-    .stat-row { grid-template-columns: repeat(3,1fr); gap: 6px; }
-  }
+:root{
+  --navy:#17365d;--blue:#2f80ed;--light:#eef6ff;--line:#d8e5f2;
+  --text:#243447;--muted:#62748a;--white:#fff;--green:#138a5b;
+  --orange:#ef7d32;--shadow:0 12px 34px rgba(33,76,120,.10);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;color:var(--text);background:linear-gradient(180deg,#f7fbff,#fff)}
+.container{max-width:760px;margin:auto;padding:24px 16px 72px}
+.hero{text-align:center;padding:30px 12px 24px}
+.badge{display:inline-block;background:#e7f1ff;color:var(--blue);padding:7px 14px;border-radius:999px;font-weight:700;font-size:.82rem}
+h1{font-size:clamp(2rem,6vw,3.25rem);line-height:1.25;color:var(--navy);margin:18px 0 12px}
+.hero p{color:var(--muted);line-height:1.8;margin:0}
+.loss-copy{margin:20px auto 0;max-width:580px;background:#fff8f1;border:1px solid #ffd9bd;border-radius:14px;padding:15px;color:#7a431e;font-weight:700}
+.card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:22px;margin:16px 0;box-shadow:var(--shadow)}
+.step{font-size:.78rem;color:var(--blue);font-weight:800;letter-spacing:.06em}
+h2{font-size:1.25rem;color:var(--navy);margin:6px 0 18px}
+label{display:block;font-weight:700;margin:18px 0 8px}
+.help{font-size:.8rem;color:var(--muted);font-weight:400}
+select,input[type=number]{width:100%;padding:13px;border:1px solid #bfcfe0;border-radius:10px;font-size:1rem;background:#fff}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.option{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer}
+.option input{margin-right:8px}
+.btn{width:100%;border:0;border-radius:12px;padding:15px 18px;background:var(--blue);color:white;font-weight:800;font-size:1rem;cursor:pointer;margin-top:22px}
+.btn:hover{filter:brightness(.97)}
+.result{display:none}
+.result.show{display:block}
+.summary{background:linear-gradient(135deg,#eaf4ff,#f8fbff);border:1px solid #cfe1f6;border-radius:18px;padding:22px;text-align:center}
+.summary .small{color:var(--muted)}
+.big{font-size:2.25rem;font-weight:900;color:var(--green);margin:6px 0}
+.year{font-size:1.1rem;font-weight:800;color:var(--navy)}
+.plan{border:1px solid var(--line);border-radius:16px;padding:17px;margin-top:12px;background:#fff}
+.plan.best{border:2px solid var(--blue)}
+.plan-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.plan h3{margin:0;color:var(--navy)}
+.price{font-size:1.35rem;font-weight:900;color:var(--green);white-space:nowrap}
+.reason{margin:10px 0 0;color:var(--muted);line-height:1.6}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tag{background:var(--light);color:var(--navy);padding:5px 9px;border-radius:999px;font-size:.75rem}
+.notice{font-size:.78rem;color:var(--muted);line-height:1.7;margin-top:14px}
+.trouble{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cta{background:var(--navy);color:#fff;border-radius:20px;padding:24px;margin-top:18px}
+.cta h2{color:#fff;margin-top:0}
+.cta p{line-height:1.8;color:#dbe8f7}
+.cta a{display:block;text-align:center;background:#fff;color:var(--navy);text-decoration:none;font-weight:900;padding:14px;border-radius:12px;margin-top:14px}
+footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;margin-top:28px}
+@media(max-width:520px){.options,.trouble{grid-template-columns:1fr}.plan-head{display:block}.price{margin-top:8px}}
 </style>
 </head>
 <body>
-<div class="app">
+<main class="container">
+<section class="hero">
+  <span class="badge">約30秒・無料</span>
+  <h1>あなたに合う<br>料金プラン診断</h1>
+  <p>現在の使い方から、料金とサポートのバランスが合うプランを診断します。</p>
+  <div class="loss-copy">そのまま払い続ける前に。毎月、もっと下げられる可能性があります。</div>
+</section>
 
-  <header>
-    <div class="logo">
-      <div class="logo-mark">P</div>
-      <div class="logo-name">搾取<em>判定</em></div>
+<section class="card">
+  <div class="step">STEP 1</div>
+  <h2>現在の使い方を教えてください</h2>
+
+  <label>現在利用中のブランド</label>
+  <select id="currentCarrier">
+    <option>ドコモ</option><option>ahamo</option><option>au</option><option>povo</option>
+    <option>UQ mobile</option><option>SoftBank</option><option>LINEMO</option><option>Y!mobile</option>
+    <option>その他・わからない</option>
+  </select>
+
+  <label>現在の月額料金 <span class="help">端末代を除く概算</span></label>
+  <input id="currentPrice" type="number" min="0" step="100" value="7000">
+
+  <label>月間データ使用量</label>
+  <select id="data">
+    <option value="1">1GB以下</option><option value="3">3GB程度</option>
+    <option value="10">10GB程度</option><option value="30" selected>30GB程度</option>
+    <option value="50">50GB以上</option><option value="999">無制限が必要</option>
+  </select>
+
+  <label>通話の使い方</label>
+  <select id="call">
+    <option value="none">ほとんど電話しない</option>
+    <option value="short">短い電話を時々する</option>
+    <option value="many">長電話・仕事でよく使う</option>
+  </select>
+</section>
+
+<section class="card">
+  <div class="step">STEP 2</div>
+  <h2>重視することを選んでください</h2>
+  <div class="options">
+    <label class="option"><input type="checkbox" value="cheap">料金を下げたい</label>
+    <label class="option"><input type="checkbox" value="quality">通信品質を重視</label>
+    <label class="option"><input type="checkbox" value="store">店舗サポートが必要</label>
+    <label class="option"><input type="checkbox" value="family">家族割を重視</label>
+    <label class="option"><input type="checkbox" value="senior">60歳以上・シニア向け</label>
+    <label class="option"><input type="checkbox" value="unlimited">かけ放題を重視</label>
+  </div>
+  <button class="btn" onclick="diagnose()">診断結果を見る</button>
+</section>
+
+<section id="result" class="result">
+  <div class="card">
+    <div class="step">RESULT</div>
+    <h2>診断結果</h2>
+    <div class="summary">
+      <div class="small">現在の料金から</div>
+      <div class="big" id="monthlySave">月額 約0円</div>
+      <div class="year" id="annualSave">年間 約0円</div>
+      <div class="small">下げられる可能性があります</div>
     </div>
-    <p class="header-copy">あなたは今、<strong>搾取されています。</strong><br>大手キャリア・代理店に毎月いくら奪われているか、1秒で暴きます。<br><span style="font-size:0.88rem;font-weight:700;color:var(--green);margin-top:14px;display:block;line-height:1.9;text-align:center;letter-spacing:0.04em;border:1px solid rgba(61,255,160,0.25);border-radius:8px;padding:12px 14px;background:rgba(61,255,160,0.04);">
-⚔️「業界の常識」を破壊ぶっ潰す聖剣<br>
-<span style="font-size:0.78rem;color:var(--text2);font-weight:400;">既得権益の権化・既存代理店が20年間隠してきた業界の嘘を、今ここで暴く。</span>
-</span>
-<span style="font-size:0.82rem;color:var(--red);margin-top:12px;display:block;line-height:2;border-left:3px solid var(--red);padding-left:10px;">
-💢 大手キャリアの豪華なビルは、あなたのお陰で建っています。<br>
-💢 駅前の一等地にスマホショップが出店できるのは、あなたが余計なお金を払っているからです。<br>
-💢 毎月の「よくわからないオプション料金」は、誰かのボーナスになっています。<br>
-💢 あなたは今日も、知らないうちに搾取されています。
-</span>
-<span style="font-size:0.82rem;color:var(--red);margin-top:4px;display:block;line-height:2.2;border-left:3px solid rgba(255,107,107,0.4);padding-left:10px;font-style:italic;">
-「使わないオプション」── 契約時に勝手についてくる。解約も面倒。<br>
-「余ったギガ」── あなたに必要のない大容量プランを売りつけている。<br>
-「謎の頭金」── スマホ本体とは別に取られる、意味不明な手数料。<br>
-すべて、<strong style="color:var(--red);font-style:normal;">売り上げ至上主義</strong>が生んだ「合法的な搾取」です。
-</span><span style="font-size:0.85rem;color:var(--green2);margin-top:10px;display:block;">📱 お父さん・お母さんにも教えてあげてください。</span><span style="font-size:0.82rem;color:var(--amber);margin-top:10px;display:block;line-height:2;">
-🎁 お孫さんへのプレゼントがグレードアップするかも。<br>
-🌸 年に一度の旅行が、今年は少し豪華になるかも。<br>
-🍣 好きなものを、我慢せず食べられるかも。<br>
-💐 自分へのご褒美に、好きなお花を買えるかも。<br>
-📖 ずっと欲しかった本や趣味のものが手に入るかも。
-</span>
-<span style="font-size:0.82rem;color:#f9a8d4;margin-top:10px;display:block;line-height:2;">
-👒 奥様・ご自身へのご褒美に。<br>
-👜 ずっと気になっていたあのバッグ、手が届くかも。<br>
-💅 月1回のネイル・エステを罪悪感なく楽しめるかも。<br>
-🌹 夫婦で行く温泉旅行が、今年こそ実現するかも。<br>
-☕ 毎朝のコーヒーを、少しいいものにできるかも。
-</span>
-<span style="font-size:0.82rem;color:#93c5fd;margin-top:10px;display:block;line-height:2;">
-⛳ ご主人へのご褒美に。<br>
-🏌️ 月1回のゴルフが、もう1回増えるかも。<br>
-🍺 晩酌のビールを、少しいいものにできるかも。<br>
-🚗 ずっと気になっていたカー用品、買えるかも。<br>
-🎣 釣り・趣味の道具を、思い切って新調できるかも。
-</span></p>
-  </header>
-
-  <!-- Step indicators -->
-  <div class="steps">
-    <div class="step-dot"><div class="dot active" id="dot1">1</div></div>
-    <div class="step-line" id="line1"></div>
-    <div class="step-dot"><div class="dot" id="dot2">2</div></div>
-    <div class="step-line" id="line2"></div>
-    <div class="step-dot"><div class="dot" id="dot3">3</div></div>
+    <div id="plans"></div>
+    <p class="notice">表示料金は診断用の概算です。割引、通話料、端末代、キャンペーン、利用条件により実際の料金は異なります。契約前に各社公式サイトまたは店舗で必ず確認してください。</p>
   </div>
 
-  <!-- Section 1: Usage input -->
-  <div class="section active" id="sec1">
-    <p class="section-title">あなたの使い方を入力してください</p>
-    <p class="section-sub">正直に入れるほど、搾取額が正確に出ます。怖くても入れてください。</p>
-
-    <div class="card">
-      <div class="card-label">データ通信量</div>
-      <div class="slider-group">
-        <div class="slider-row">
-          <div class="slider-header">
-            <span class="slider-label">月間データ使用量</span>
-            <span class="slider-val" id="val-data">15 GB</span>
-          </div>
-          <input type="range" id="sl-data" min="1" max="100" value="15" step="1">
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">通話</div>
-      <div class="slider-group">
-        <div class="slider-row">
-          <div class="slider-header">
-            <span class="slider-label">月間通話時間</span>
-            <span class="slider-val" id="val-call">30 分</span>
-          </div>
-          <input type="range" id="sl-call" min="0" max="600" value="30" step="5">
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">こだわり条件（複数選択可）</div>
-      <div class="pill-group" id="pref-pills">
-        <div class="pill" data-val="esim">eSIM対応</div>
-        <div class="pill" data-val="unlimited">かけ放題</div>
-        <div class="pill" data-val="docomo">ドコモ回線</div>
-        <div class="pill" data-val="au">au回線</div>
-        <div class="pill" data-val="softbank">ソフトバンク回線</div>
-        <div class="pill" data-val="cheap">とにかく安さ優先</div>
-        <div class="pill" data-val="stable">安定回線優先</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">現在の月額料金</div>
-      <div class="slider-group">
-        <div class="slider-row">
-          <div class="slider-header">
-            <span class="slider-label">今払っている金額</span>
-            <span class="slider-val" id="val-current">¥6,000</span>
-          </div>
-          <input type="range" id="sl-current" min="1000" max="15000" value="6000" step="100">
-        </div>
-      </div>
-    </div>
-
-    <button class="btn-primary" id="btn-next1">今すぐ搾取額を暴く →</button>
-  </div>
-
-  <!-- Section 2: Loading -->
-  <div class="section" id="sec2">
-    <div class="loading-box">
-      <div class="loading-ring"></div>
-      <div class="loading-title">搾取額を計算中...</div>
-      <div class="loading-sub">大手キャリアに奪われた金額を算出しています</div>
-      <div style="margin:1.5rem auto;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.25);border-radius:12px;padding:16px 20px;max-width:320px;">
-        <div style="font-size:0.75rem;color:#ffaaaa;margin-bottom:8px;letter-spacing:0.05em;">今この瞬間も、あなたは募金しています</div>
-        <div style="font-family:var(--mono);font-size:2rem;font-weight:500;color:var(--red)" id="donate-counter">¥0.00</div>
-        <div style="font-size:0.72rem;color:var(--text3);margin-top:4px;">← 大手キャリアへの「自動募金」額</div>
-      </div>
-      <div class="loading-steps">
-        <div class="ls" id="ls1">過払い金額を試算中</div>
-        <div class="ls" id="ls2">代理店が隠しているコストを検出中</div>
-        <div class="ls" id="ls3">搾取構造を解析中</div>
-        <div class="ls" id="ls4">最適プランをランキング化</div>
-      </div>
+  <div class="card">
+    <div class="step">SMARTPHONE SUPPORT</div>
+    <h2>料金以外のお困りごとも選べます</h2>
+    <div class="trouble">
+      <label class="option"><input type="checkbox">LINEの使い方</label>
+      <label class="option"><input type="checkbox">Wi-Fiにつながらない</label>
+      <label class="option"><input type="checkbox">詐欺SMS・セキュリティ</label>
+      <label class="option"><input type="checkbox">機種変更・データ移行</label>
+      <label class="option"><input type="checkbox">スマホが遅い・充電が減る</label>
+      <label class="option"><input type="checkbox">写真・バックアップ整理</label>
+      <label class="option"><input type="checkbox">ID・パスワードを忘れた</label>
+      <label class="option"><input type="checkbox">ID・パスワードを整理したい</label>
+      <label class="option"><input type="checkbox">ログインできない</label>
+      <label class="option"><input type="checkbox">登録サービスがわからない</label>
     </div>
   </div>
 
-  <!-- Section 3: Results -->
-  <div class="section" id="sec3">
-    <p class="section-title">搾取判定結果</p>
-    <p class="section-sub" id="result-sub">あなたの使い方に最適なプランが見つかりました</p>
-
-    <div class="loss-banner">
-      <div class="loss-icon">🔥</div>
-      <div class="loss-text">
-        このまま黙っていると<br>
-        <span class="loss-amount" id="loss-annual">年間 ¥XX,XXX</span> を大手キャリアに奪われ続けます
-      </div>
-    </div>
-
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-val" id="stat-best-price">¥—</div>
-        <div class="stat-label">最安プラン月額</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="stat-save-month">¥—</div>
-        <div class="stat-label">月間節約額</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="stat-save-year">¥—</div>
-        <div class="stat-label">年間節約額</div>
-      </div>
-    </div>
-
-    <div id="seizure-goods" style="margin-bottom:1.25rem;display:none">
-      <div style="font-size:0.72rem;font-family:var(--mono);letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:0.75rem;">その搾取額で買えたもの</div>
-      <div class="seizure-items" id="seizure-items-grid"></div>
-    </div>
-    <div class="result-section-title">おすすめプラン ランキング</div>
-    <div class="plan-list" id="plan-list"></div>
-
-    <div class="rescue-banner" id="store-section" style="display:none">
-      <div class="rescue-title">⚔️ あなたはこの複雑な手続きを<br>一人でやる必要はありません。</div>
-      <div class="rescue-sub">我々が既存代理店からあなたを<strong style="color:var(--green2)">奪還</strong>します。<br>MNP転出・SIM切り替え・スマホ設定まで、全て一緒にやります。</div>
-      <div style="font-size:0.75rem;color:var(--text3);margin-bottom:8px;font-family:var(--mono);">── 本日の最短予約枠 ──</div>
-      <div class="rescue-slots">
-        <div class="rescue-slot"><span class="slot-time">本日 14:00〜</span><span class="slot-status">残り1枠</span></div>
-        <div class="rescue-slot"><span class="slot-time">本日 16:00〜</span><span class="slot-status">残り2枠</span></div>
-        <div class="rescue-slot"><span class="slot-time">明日 10:00〜</span><span class="slot-status">空きあり</span></div>
-      </div>
-      <div class="store-banner-body" style="margin-top:0">
-        <div class="store-list">
-          <div class="store-item">
-            <div class="store-info">
-              <div class="store-name">スカイセブンモバイル 川越店</div>
-              <div class="store-addr">埼玉県川越市 ／ スマホよろず相談窓口</div>
-            </div>
-            <div class="store-actions">
-              <a class="store-btn store-btn-call" href="tel:049-000-0000">📞 電話</a>
-              <a class="store-btn store-btn-map" href="https://skyseben-mobile-oomiya.com" target="_blank" rel="noopener">🗺 詳細</a>
-            </div>
-          </div>
-          <div class="store-item">
-            <div class="store-info">
-              <div class="store-name">スカイセブンモバイル 大宮店</div>
-              <div class="store-addr">埼玉県さいたま市大宮区 ／ スマホよろず相談窓口</div>
-            </div>
-            <div class="store-actions">
-              <a class="store-btn store-btn-call" href="tel:048-000-0000">📞 電話</a>
-              <a class="store-btn store-btn-map" href="https://skyseben-mobile-oomiya.com" target="_blank" rel="noopener">🗺 詳細</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <button class="reset-btn" id="btn-reset">← もう一度判定する</button>
+  <div class="cta">
+    <h2>一人で決めるのが不安な方へ</h2>
+    <p>料金見直し、契約手続き、初期設定、ID・パスワード整理まで、スマホ相談窓口で一緒に確認します。</p>
+    <a href="https://skyseben-mobile-oomiya.com/" target="_blank" rel="noopener">相談窓口を確認する</a>
   </div>
-
-</div>
+</section>
 
 <footer>
-  搾取判定 — プラン情報は2025年時点の公開情報をもとに作成。<br>
-  実際の料金は各社公式サイトでご確認ください。
+  本診断は一般的な利用条件に基づく参考情報です。特定の契約を保証・推奨するものではありません。<br>
+  © スマホ相談窓口
 </footer>
+</main>
 
 <script>
-// ── 行政書士エンブレム ──────────────────────────────
-document.body.insertAdjacentHTML('beforeend', `
-  <div class="legal-emblem" onclick="toggleTooltip()" title="行政書士による中立公正な判定を保証">
-    <div class="legal-emblem-icon">⚖️</div>
-    <div class="legal-emblem-text">行政書士<br>中立公正<br>保証</div>
-  </div>
-  <div class="emblem-tooltip" id="emblem-tooltip">
-    <div style="font-weight:500;color:var(--green2);margin-bottom:4px;">⚖️ 法的中立性の保証</div>
-    本サービスは行政書士・士業との連携のもと、中立公正な情報提供を実施しています。<br>
-    特定キャリアへの誘導は一切行いません。
-  </div>
-`);
-
-function toggleTooltip() {
-  document.getElementById('emblem-tooltip').classList.toggle('show');
-  setTimeout(() => document.getElementById('emblem-tooltip')?.classList.remove('show'), 3000);
-}
-
-// ── 搾取額で買えるもの定義 ──────────────────────────
-const GOODS = [
-  { icon: '🥩', label: 'ステーキ', unit: 3000 },
-  { icon: '🍺', label: '晩酌ビール', unit: 500 },
-  { icon: '🌸', label: '温泉旅行', unit: 15000 },
-  { icon: '🎒', label: '孫のランドセル', unit: 50000 },
-  { icon: '👜', label: 'ブランドバッグ', unit: 30000 },
-  { icon: '⛳', label: 'ゴルフ1ラウンド', unit: 8000 },
-  { icon: '💅', label: 'ネイル', unit: 5000 },
-  { icon: '📖', label: '好きな本', unit: 1500 },
+const PLANS=[
+ {brand:"ドコモ",name:"ドコモの小容量向けプラン",price:3850,data:10,store:true,family:true,quality:true,senior:true,call:"short",url:"https://www.docomo.ne.jp/charge/"},
+ {brand:"ドコモ",name:"ドコモの大容量向けプラン",price:8448,data:999,store:true,family:true,quality:true,senior:true,call:"many",url:"https://www.docomo.ne.jp/charge/"},
+ {brand:"ahamo",name:"ahamo",price:2970,data:30,store:false,family:false,quality:true,senior:false,call:"short",url:"https://ahamo.com/"},
+ {brand:"au",name:"auの大容量向けプラン",price:8008,data:999,store:true,family:true,quality:true,senior:true,call:"many",url:"https://www.au.com/mobile/charge/"},
+ {brand:"povo",name:"povo2.0",price:2700,data:30,store:false,family:false,quality:true,senior:false,call:"none",url:"https://povo.jp/"},
+ {brand:"UQ mobile",name:"UQ mobile 中容量プラン",price:3828,data:35,store:true,family:true,quality:true,senior:true,call:"short",url:"https://www.uqwimax.jp/mobile/plan/"},
+ {brand:"SoftBank",name:"SoftBankの大容量向けプラン",price:7425,data:999,store:true,family:true,quality:true,senior:true,call:"many",url:"https://www.softbank.jp/mobile/price_plan/"},
+ {brand:"LINEMO",name:"LINEMO ベストプラン",price:2090,data:10,store:false,family:false,quality:true,senior:false,call:"none",url:"https://www.linemo.jp/plan/"},
+ {brand:"LINEMO",name:"LINEMO ベストプランV",price:2970,data:30,store:false,family:false,quality:true,senior:false,call:"short",url:"https://www.linemo.jp/plan/"},
+ {brand:"Y!mobile",name:"Y!mobile 小容量プラン",price:3058,data:5,store:true,family:true,quality:true,senior:true,call:"short",url:"https://www.ymobile.jp/plan/"},
+ {brand:"Y!mobile",name:"Y!mobile 中容量プラン",price:4158,data:30,store:true,family:true,quality:true,senior:true,call:"short",url:"https://www.ymobile.jp/plan/"}
 ];
 
-// ── リアルタイム募金カウンター ───────────────────────
-let donateInterval = null;
-function startDonateCounter(monthlyOverpay) {
-  const perSecond = Math.max(monthlyOverpay, 500) / (30 * 24 * 3600);
-  let elapsed = 0;
-  const el = document.getElementById('donate-counter');
-  if (!el) return;
-  clearInterval(donateInterval);
-  donateInterval = setInterval(() => {
-    elapsed += 0.05;
-    const val = perSecond * elapsed;
-    if (el) el.textContent = '¥' + val.toFixed(2);
-  }, 50);
+function selectedPrefs(){
+ return [...document.querySelectorAll('.options input[type=checkbox]:checked')].map(x=>x.value);
 }
+function diagnose(){
+ const current=Number(document.getElementById('currentPrice').value)||0;
+ const data=Number(document.getElementById('data').value);
+ const call=document.getElementById('call').value;
+ const prefs=selectedPrefs();
 
-function stopDonateCounter() {
-  clearInterval(donateInterval);
-  donateInterval = null;
+ let list=PLANS.filter(p=>p.data>=data);
+ if(!list.length) list=PLANS.filter(p=>p.data===999);
+
+ list=list.map(p=>{
+   let score=10000-p.price;
+   if(prefs.includes('store')&&p.store)score+=3500;
+   if(prefs.includes('family')&&p.family)score+=1800;
+   if(prefs.includes('quality')&&p.quality)score+=1300;
+   if(prefs.includes('senior')&&p.senior)score+=2500;
+   if(prefs.includes('unlimited')&&p.call==="many")score+=2500;
+   if(call===p.call)score+=1000;
+   return {...p,score};
+ }).sort((a,b)=>b.score-a.score).slice(0,3);
+
+ const best=list[0];
+ const save=Math.max(0,current-best.price);
+ document.getElementById('monthlySave').textContent="月額 約"+save.toLocaleString()+"円";
+ document.getElementById('annualSave').textContent="年間 約"+(save*12).toLocaleString()+"円";
+
+ const box=document.getElementById('plans');
+ box.innerHTML=list.map((p,i)=>{
+   const reasons=[];
+   if(p.store)reasons.push("店舗で相談しやすい");
+   if(p.family)reasons.push("家族利用と相性がよい");
+   if(p.quality)reasons.push("大手キャリア回線");
+   if(p.senior)reasons.push("対面サポートを重視する方に向く");
+   return `<div class="plan ${i===0?'best':''}">
+    <div class="plan-head"><div><h3>${i===0?'おすすめ：':''}${p.brand}</h3><div>${p.name}</div></div>
+    <div class="price">約${p.price.toLocaleString()}円/月</div></div>
+    <p class="reason">${reasons.slice(0,2).join("・")||"オンライン手続きで料金を抑えやすい"}</p>
+    <div class="tags">${p.store?'<span class="tag">店舗対応</span>':''}${p.family?'<span class="tag">家族向け</span>':''}${p.senior?'<span class="tag">シニア向け</span>':''}</div>
+   </div>`;
+ }).join("");
+
+ document.getElementById('result').classList.add('show');
+ document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
-
-const PLANS = [
-  {
-    id: 'iijmio-2',
-    carrier: 'IIJmio',
-    name: 'ギガプラン 2GB',
-    price: 850,
-    data: 2,
-    callFree: false,
-    callPer30: 11,
-    esim: true,
-    line: 'docomo',
-    tags: ['docomo回線', 'eSIM対応'],
-    url: 'https://www.iijmio.jp/?utm_source=value&utm_medium=affiliate&utm_campaign=VC000001',
-    strengths: ['最安水準', 'eSIM即日開通'],
-    cautions: ['データ2GBと少なめ']
-  },
-  {
-    id: 'iijmio-5',
-    carrier: 'IIJmio',
-    name: 'ギガプラン 5GB',
-    price: 990,
-    data: 5,
-    callFree: false,
-    callPer30: 11,
-    esim: true,
-    line: 'docomo',
-    tags: ['docomo回線', 'eSIM対応'],
-    url: 'https://www.iijmio.jp/?utm_source=value&utm_medium=affiliate&utm_campaign=VC000001',
-    strengths: ['コスパ最高水準', 'eSIM対応'],
-    cautions: []
-  },
-  {
-    id: 'iijmio-15',
-    carrier: 'IIJmio',
-    name: 'ギガプラン 15GB',
-    price: 1440,
-    data: 15,
-    callFree: false,
-    callPer30: 11,
-    esim: true,
-    line: 'docomo',
-    tags: ['docomo回線', 'eSIM対応'],
-    url: 'https://www.iijmio.jp/?utm_source=value&utm_medium=affiliate&utm_campaign=VC000001',
-    strengths: ['中容量最安クラス', 'eSIM対応'],
-    cautions: []
-  },
-  {
-    id: 'iijmio-20',
-    carrier: 'IIJmio',
-    name: 'ギガプラン 20GB',
-    price: 2000,
-    data: 20,
-    callFree: false,
-    callPer30: 11,
-    esim: true,
-    line: 'docomo',
-    tags: ['docomo回線', 'eSIM対応'],
-    url: 'https://www.iijmio.jp/?utm_source=value&utm_medium=affiliate&utm_campaign=VC000001',
-    strengths: ['20GB級で最安クラス'],
-    cautions: []
-  },
-  {
-    id: 'mineo-s5',
-    carrier: 'mineo',
-    name: 'マイピタ 5GB (Sプラン)',
-    price: 1518,
-    data: 5,
-    callFree: false,
-    callPer30: 10,
-    esim: true,
-    line: 'softbank',
-    tags: ['ソフトバンク回線', 'eSIM対応'],
-    url: 'https://mineo.jp/plan/',
-    strengths: ['余ったデータをシェア可'],
-    cautions: []
-  },
-  {
-    id: 'mineo-d10',
-    carrier: 'mineo',
-    name: 'マイピタ 10GB (Dプラン)',
-    price: 1958,
-    data: 10,
-    callFree: false,
-    callPer30: 10,
-    esim: true,
-    line: 'docomo',
-    tags: ['docomo回線', 'eSIM対応'],
-    url: 'https://mineo.jp/plan/',
-    strengths: ['データシェア機能', 'コミュニティサポート'],
-    cautions: []
-  },
-  {
-    id: 'rakuten',
-    carrier: '楽天モバイル',
-    name: 'Rakuten最強プラン',
-    price: 1078,
-    data: 3,
-    callFree: true,
-    callPer30: 0,
-    esim: true,
-    line: 'rakuten',
-    priceNote: '3GBまで ¥1,078 / 3〜20GBは ¥2,178 / 20GB〜は ¥3,278',
-    tags: ['かけ放題', 'eSIM対応', '楽天回線'],
-    url: 'https://network.mobile.rakuten.co.jp/',
-    strengths: ['かけ放題無料', 'データ量連動料金'],
-    cautions: ['エリアによって速度差あり']
-  },
-  {
-    id: 'ahamo',
-    carrier: 'ahamo (NTTドコモ)',
-    name: 'ahamo 20GB',
-    price: 2970,
-    data: 20,
-    callFree: false,
-    callPer30: 0,
-    callNote: '5分以内かけ放題付き',
-    esim: true,
-    line: 'docomo',
-    tags: ['ドコモ品質', '5分かけ放題', 'eSIM対応'],
-    url: 'https://px.a8.net/svt/ejp?a8mat=4B3OR1+45FUE2+4TIO+626XU',
-    strengths: ['ドコモ品質の安定回線', '海外80ヵ国ローミング'],
-    cautions: []
-  },
-  {
-    id: 'povo',
-    carrier: 'povo (au)',
-    name: 'povo2.0 トッピング型',
-    price: 390,
-    data: 0,
-    callFree: false,
-    callPer30: 22,
-    esim: true,
-    line: 'au',
-    priceNote: '基本料0円＋使った分だけトッピング',
-    tags: ['au回線', 'eSIM対応', '基本料0円'],
-    url: 'https://povo.jp/',
-    strengths: ['使わない月は0円', 'au品質'],
-    cautions: ['低頻度利用に限りお得']
-  },
-  {
-    id: 'linemo',
-    carrier: 'LINEMO (SoftBank)',
-    name: 'ミニプラン 3GB',
-    price: 990,
-    data: 3,
-    callFree: false,
-    callPer30: 22,
-    esim: true,
-    line: 'softbank',
-    tags: ['ソフトバンク回線', 'eSIM対応', 'LINEギガフリー'],
-    url: 'https://www.linemo.jp/',
-    strengths: ['LINEのデータ消費なし', 'SoftBank品質'],
-    cautions: ['3GBと容量少なめ']
-  },
-  {
-    id: 'linemo-20',
-    carrier: 'LINEMO (SoftBank)',
-    name: 'スマホプラン 20GB',
-    price: 2728,
-    data: 20,
-    callFree: false,
-    callPer30: 22,
-    esim: true,
-    line: 'softbank',
-    tags: ['ソフトバンク回線', 'eSIM対応', 'LINEギガフリー'],
-    url: 'https://www.linemo.jp/',
-    strengths: ['LINEのデータ消費なし', 'SoftBank品質'],
-    cautions: []
-  },
-  {
-    id: 'ymobile-s',
-    carrier: 'Y!mobile',
-    name: 'シンプル2 S (4GB)',
-    price: 2365,
-    data: 4,
-    callFree: false,
-    callPer30: 22,
-    esim: false,
-    line: 'softbank',
-    tags: ['ソフトバンク回線', '店舗サポート'],
-    url: 'https://px.a8.net/svt/ejp?a8mat=4B3OR1+4619ZU+424K+BWVTE',
-    strengths: ['実店舗でのサポート', '家族割あり'],
-    cautions: ['MVNOより割高']
-  },
-  {
-    id: 'uqmobile-s',
-    carrier: 'UQ mobile',
-    name: 'トクトクプラン (15GB〜)',
-    price: 2365,
-    data: 15,
-    callFree: false,
-    callPer30: 22,
-    esim: true,
-    line: 'au',
-    tags: ['au回線', 'eSIM対応', '1GB以下なら990円'],
-    url: 'https://www.uqwimax.jp/mobile/',
-    strengths: ['使わない月は990円', 'au品質', '店舗サポート'],
-    cautions: []
-  },
-  {
-    id: 'nuro',
-    carrier: 'NUROモバイル',
-    name: 'NEOプラン (20GB)',
-    price: 1980,
-    data: 20,
-    callFree: false,
-    callPer30: 11,
-    esim: false,
-    line: 'docomo',
-    tags: ['docomo回線', 'バリューパック'],
-    url: 'https://mobile.nuro.jp/',
-    strengths: ['20GBで最安クラス', '3回線選択可'],
-    cautions: ['eSIM非対応']
-  },
-  {
-    id: 'docomo',
-    carrier: 'NTTドコモ',
-    name: 'eximo (無制限)',
-    price: 7315,
-    data: 999,
-    callFree: true,
-    callPer30: 0,
-    esim: true,
-    line: 'docomo',
-    tags: ['ドコモ品質', 'かけ放題', '無制限'],
-    url: 'https://www.docomo.ne.jp/',
-    strengths: ['完全無制限', '最高品質回線'],
-    cautions: ['高コスト']
-  },
-  {
-    id: 'softbank',
-    carrier: 'SoftBank',
-    name: 'ペイトク無制限',
-    price: 9625,
-    data: 999,
-    callFree: true,
-    callPer30: 0,
-    esim: true,
-    line: 'softbank',
-    tags: ['かけ放題', '無制限', 'PayPay連携'],
-    url: 'https://www.softbank.jp/',
-    strengths: ['PayPay経済圏に最適', 'かけ放題付き'],
-    cautions: ['割高']
-  },
-];
-
-function calcRakutenPrice(dataGB) {
-  if (dataGB <= 3) return 1078;
-  if (dataGB <= 20) return 2178;
-  return 3278;
-}
-
-function calcPriceForUser(plan, dataGB, callMin) {
-  let base = plan.price;
-  if (plan.id === 'rakuten') base = calcRakutenPrice(dataGB);
-  const callCost = plan.callFree ? 0 : Math.ceil(callMin / 30) * plan.callPer30;
-  return base + callCost;
-}
-
-function matchData(plan, dataGB) {
-  if (plan.id === 'rakuten') return true;
-  if (plan.id === 'povo') return true;
-  return plan.data >= dataGB;
-}
-
-function scoreFilter(plan, dataGB, callMin, prefs) {
-  if (!matchData(plan, dataGB)) return false;
-  if (prefs.includes('unlimited') && !plan.callFree) {
-    // keep but penalize
-  }
-  if (prefs.includes('esim') && !plan.esim) return false;
-  if (prefs.includes('docomo') && plan.line !== 'docomo') return false;
-  if (prefs.includes('au') && plan.line !== 'au') return false;
-  if (prefs.includes('softbank') && plan.line !== 'softbank') return false;
-  return true;
-}
-
-let state = { data:15, call:30, current:6000, prefs:[], results:[] };
-
-// Sliders
-function bindSlider(id, valId, fmt) {
-  const sl = document.getElementById(id);
-  const vl = document.getElementById(valId);
-  sl.addEventListener('input', () => { vl.textContent = fmt(sl.value); });
-}
-bindSlider('sl-data','val-data', v => v+' GB');
-bindSlider('sl-call','val-call', v => v+' 分');
-bindSlider('sl-current','val-current', v => '¥'+Number(v).toLocaleString());
-
-// Pills
-document.querySelectorAll('#pref-pills .pill').forEach(p => {
-  p.addEventListener('click', () => p.classList.toggle('on'));
-});
-
-function getPrefs() {
-  return [...document.querySelectorAll('#pref-pills .pill.on')].map(p => p.dataset.val);
-}
-
-function goTo(n) {
-  document.querySelectorAll('.section').forEach((s,i) => {
-    s.classList.toggle('active', i+1 === n);
-  });
-  ['dot1','dot2','dot3'].forEach((id,i) => {
-    const dot = document.getElementById(id);
-    dot.classList.toggle('done', i+1 < n);
-    dot.classList.toggle('active', i+1 === n);
-    if (i+1 < n) dot.textContent = '✓';
-    else dot.textContent = i+1;
-  });
-  ['line1','line2'].forEach((id,i) => {
-    document.getElementById(id).classList.toggle('done', i+1 < n);
-  });
-}
-
-document.getElementById('btn-next1').addEventListener('click', () => {
-  state.data = Number(document.getElementById('sl-data').value);
-  state.call = Number(document.getElementById('sl-call').value);
-  state.current = Number(document.getElementById('sl-current').value);
-  state.prefs = getPrefs();
-  goTo(2);
-  runDiagnosis();
-});
-
-function runDiagnosis() {
-  const overpay = state.current - 1500;
-  startDonateCounter(overpay);
-  const steps = ['ls1','ls2','ls3','ls4'];
-  steps.forEach(id => document.getElementById(id).classList.remove('show'));
-  let i = 0;
-  const timer = setInterval(() => {
-    if (i < steps.length) {
-      document.getElementById(steps[i]).classList.add('show');
-      i++;
-    } else {
-      clearInterval(timer);
-      showResults();
-    }
-  }, 600);
-}
-
-function showResults() {
-  stopDonateCounter();
-  const { data, call, current, prefs } = state;
-  let plans = PLANS.filter(p => scoreFilter(p, data, call, prefs));
-
-  // If no plans match strict filter, relax line filter
-  if (plans.length === 0) {
-    plans = PLANS.filter(p => matchData(p, data));
-  }
-
-  const scored = plans.map(p => {
-    const total = calcPriceForUser(p, data, call);
-    return { ...p, totalPrice: total };
-  }).sort((a,b) => a.totalPrice - b.totalPrice);
-
-  state.results = scored;
-
-  const best = scored[0];
-  const saving = current - best.totalPrice;
-  const savingYear = saving * 12;
-
-  document.getElementById('loss-annual').textContent = '年間 ¥' + Math.max(0, savingYear).toLocaleString() + ' の過払い';
-  document.getElementById('stat-best-price').textContent = '¥' + best.totalPrice.toLocaleString();
-  document.getElementById('stat-save-month').textContent = (saving > 0 ? '-¥' : '+¥') + Math.abs(saving).toLocaleString();
-  document.getElementById('stat-save-year').textContent = (savingYear > 0 ? '-¥' : '+¥') + Math.abs(savingYear).toLocaleString();
-  // 搾取額で買えるものを表示
-  const annualLoss = Math.max(0, savingYear);
-  const goodsGrid = document.getElementById('seizure-items-grid');
-  const goodsSection = document.getElementById('seizure-goods');
-  if (annualLoss > 0 && goodsGrid) {
-    goodsGrid.innerHTML = '';
-    const shown = GOODS.filter(g => annualLoss >= g.unit).slice(0, 8);
-    const display = shown.length > 0 ? shown : GOODS.slice(0, 4);
-    display.forEach(g => {
-      const count = Math.floor(annualLoss / g.unit);
-      goodsGrid.insertAdjacentHTML('beforeend', `
-        <div class="seizure-item">
-          <span class="seizure-icon">${g.icon}</span>
-          <div class="seizure-label">${g.label}<span>${count}回分</span></div>
-        </div>
-      `);
-    });
-    goodsSection.style.display = 'block';
-  }
-
-  document.getElementById('result-sub').textContent = `データ${data}GB・通話${call}分での最適プランです`;
-
-  const list = document.getElementById('plan-list');
-  list.innerHTML = '';
-  scored.slice(0,7).forEach((p, idx) => {
-    const saving2 = current - p.totalPrice;
-    const card = document.createElement('div');
-    card.className = 'plan-card' + (idx === 0 ? ' best' : '');
-    card.innerHTML = `
-      ${idx === 0 ? '<div class="best-badge">✦ BEST</div>' : ''}
-      <div class="plan-top">
-        <div>
-          <div class="plan-carrier">${p.carrier}</div>
-          <div class="plan-name">${p.name}</div>
-        </div>
-        <div class="plan-price-wrap">
-          <div class="plan-price">¥${p.totalPrice.toLocaleString()}<span style="font-size:0.7rem;color:var(--text3)">/月</span></div>
-        </div>
-      </div>
-      <div class="${saving2 >= 0 ? 'diff-box' : 'diff-box worse'}">
-        <div>
-          <div class="diff-label">現在の料金との差額</div>
-          <div style="display:flex;align-items:center;margin-top:3px;">
-            <span class="diff-now">¥${current.toLocaleString()}</span>
-            <span class="diff-arrow">→</span>
-            <span class="${saving2 >= 0 ? 'diff-new' : 'diff-new worse'}">¥${p.totalPrice.toLocaleString()}</span>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <div class="${saving2 >= 0 ? 'diff-save' : 'diff-save worse'}">${saving2 >= 0 ? '-' : '+'}¥${Math.abs(saving2).toLocaleString()}<span style="font-size:0.7rem;font-weight:400;color:var(--text3)">/月</span></div>
-          <div class="diff-year">年間 ${saving2 >= 0 ? '-' : '+'}¥${Math.abs(saving2*12).toLocaleString()}</div>
-        </div>
-      </div>
-      <div class="plan-tags">
-        ${p.tags.map(t => `<span class="plan-tag ${t.includes('かけ放題')||t.includes('回線')||t.includes('eSIM') ? 'ok' : ''}">${t}</span>`).join('')}
-        ${p.cautions.map(c => `<span class="plan-tag warn">⚠ ${c}</span>`).join('')}
-      </div>
-      <div class="plan-detail">
-        <div class="detail-grid">
-          <div class="detail-item"><div class="dk">基本データ</div><div class="dv">${p.data >= 999 ? '無制限' : p.data + ' GB'}</div></div>
-          <div class="detail-item"><div class="dk">通話</div><div class="dv">${p.callFree ? 'かけ放題' : (p.callNote || '30秒 ¥'+p.callPer30)}</div></div>
-          <div class="detail-item"><div class="dk">回線</div><div class="dv">${p.line === 'docomo' ? 'ドコモ' : p.line === 'au' ? 'au' : p.line === 'softbank' ? 'ソフトバンク' : '楽天'}</div></div>
-          <div class="detail-item"><div class="dk">eSIM</div><div class="dv">${p.esim ? '対応' : '非対応'}</div></div>
-        </div>
-        ${p.strengths.length ? `<div style="margin-top:10px;font-size:0.75rem;color:var(--green2)">✦ ${p.strengths.join(' / ')}</div>` : ''}
-        ${p.priceNote ? `<div style="margin-top:6px;font-size:0.72rem;color:var(--text3)">${p.priceNote}</div>` : ''}
-        <a class="detail-btn" href="${p.url}" target="_blank" rel="noopener">公式サイトで申し込む →</a>
-        <a class="consult-btn" href="#store-section" onclick="showStoreSection()">🏪 店舗で相談する</a>
-      </div>
-    `;
-    card.addEventListener('click', () => card.classList.toggle('open'));
-    list.appendChild(card);
-  });
-
-  setTimeout(() => goTo(3), 100);
-}
-
-function showStoreSection() {
-  const s = document.getElementById('store-section');
-  s.style.display = 'flex';
-  setTimeout(() => s.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-}
-
-document.getElementById('btn-reset').addEventListener('click', () => {
-  goTo(1);
-});
 </script>
 </body>
 </html>
