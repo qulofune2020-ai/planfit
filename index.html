@@ -7,51 +7,116 @@
 <meta name="description" content="スマホの使い方から、あなたに合う料金プランと見直し余地を約30秒で診断します。">
 <style>
 :root{
-  --navy:#17365d;--blue:#2f80ed;--light:#eef6ff;--line:#d8e5f2;
-  --text:#243447;--muted:#62748a;--white:#fff;--green:#138a5b;
-  --orange:#ef7d32;--shadow:0 12px 34px rgba(33,76,120,.10);
+  --navy:#17365d;--blue:#2f80ed;--blue2:#eaf4ff;--light:#f7fbff;
+  --line:#d9e6f3;--text:#243447;--muted:#62748a;--white:#fff;
+  --green:#138a5b;--orange:#ef7d32;--danger:#b65a28;
+  --shadow:0 14px 36px rgba(33,76,120,.10);
 }
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;color:var(--text);background:linear-gradient(180deg,#f7fbff,#fff)}
-.container{max-width:760px;margin:auto;padding:24px 16px 72px}
-.hero{text-align:center;padding:30px 12px 24px}
-.badge{display:inline-block;background:#e7f1ff;color:var(--blue);padding:7px 14px;border-radius:999px;font-weight:700;font-size:.82rem}
-h1{font-size:clamp(2rem,6vw,3.25rem);line-height:1.25;color:var(--navy);margin:18px 0 12px}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
+  color:var(--text);
+  background:linear-gradient(180deg,#f5faff 0%,#fff 38%,#f8fbff 100%);
+}
+button,input,select{font:inherit}
+.container{max-width:820px;margin:auto;padding:24px 16px 72px}
+.hero{text-align:center;padding:34px 12px 24px}
+.badge{
+  display:inline-block;background:#e7f1ff;color:var(--blue);
+  padding:7px 14px;border-radius:999px;font-weight:800;font-size:.82rem
+}
+h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.2;color:var(--navy);margin:18px 0 12px}
 .hero p{color:var(--muted);line-height:1.8;margin:0}
-.loss-copy{margin:20px auto 0;max-width:580px;background:#fff8f1;border:1px solid #ffd9bd;border-radius:14px;padding:15px;color:#7a431e;font-weight:700}
-.card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:22px;margin:16px 0;box-shadow:var(--shadow)}
-.step{font-size:.78rem;color:var(--blue);font-weight:800;letter-spacing:.06em}
-h2{font-size:1.25rem;color:var(--navy);margin:6px 0 18px}
-label{display:block;font-weight:700;margin:18px 0 8px}
+.loss-copy{
+  margin:20px auto 0;max-width:620px;background:#fff8f1;border:1px solid #ffd8ba;
+  border-radius:15px;padding:16px;color:#7a431e;font-weight:800
+}
+.trust-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:620px;margin:16px auto 0
+}
+.trust-item{
+  background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;
+  font-size:.82rem;color:var(--navy);font-weight:700
+}
+.card{
+  background:var(--white);border:1px solid var(--line);border-radius:22px;
+  padding:24px;margin:17px 0;box-shadow:var(--shadow)
+}
+.step{font-size:.78rem;color:var(--blue);font-weight:900;letter-spacing:.08em}
+h2{font-size:1.35rem;color:var(--navy);margin:6px 0 18px}
+h3{color:var(--navy)}
+label{display:block;font-weight:800;margin:18px 0 8px}
 .help{font-size:.8rem;color:var(--muted);font-weight:400}
-select,input[type=number]{width:100%;padding:13px;border:1px solid #bfcfe0;border-radius:10px;font-size:1rem;background:#fff}
-.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.option{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer}
-.option input{margin-right:8px}
-.btn{width:100%;border:0;border-radius:12px;padding:15px 18px;background:var(--blue);color:white;font-weight:800;font-size:1rem;cursor:pointer;margin-top:22px}
+select,input[type=number]{
+  width:100%;padding:14px;border:1px solid #bfd0e2;border-radius:11px;
+  font-size:1rem;background:#fff
+}
+.brand-grid,.options,.trouble{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px
+}
+.brand-option,.option{
+  border:1px solid var(--line);border-radius:13px;padding:13px;background:#fff;
+  cursor:pointer;transition:.2s ease
+}
+.brand-option:hover,.option:hover{border-color:#9ec4ef;background:#f8fbff}
+.brand-option input,.option input{margin-right:8px}
+.btn{
+  width:100%;border:0;border-radius:13px;padding:16px 18px;
+  background:linear-gradient(135deg,#2f80ed,#246bd1);color:#fff;
+  font-weight:900;font-size:1.02rem;cursor:pointer;margin-top:24px
+}
 .btn:hover{filter:brightness(.97)}
 .result{display:none}
 .result.show{display:block}
-.summary{background:linear-gradient(135deg,#eaf4ff,#f8fbff);border:1px solid #cfe1f6;border-radius:18px;padding:22px;text-align:center}
+.summary{
+  background:linear-gradient(135deg,#eaf4ff,#f9fcff);
+  border:1px solid #cfe1f6;border-radius:20px;padding:24px;text-align:center
+}
 .summary .small{color:var(--muted)}
-.big{font-size:2.25rem;font-weight:900;color:var(--green);margin:6px 0}
-.year{font-size:1.1rem;font-weight:800;color:var(--navy)}
-.plan{border:1px solid var(--line);border-radius:16px;padding:17px;margin-top:12px;background:#fff}
-.plan.best{border:2px solid var(--blue)}
+.big{font-size:2.4rem;font-weight:950;color:var(--green);margin:7px 0}
+.year{font-size:1.15rem;font-weight:900;color:var(--navy)}
+.compare{
+  width:100%;border-collapse:separate;border-spacing:0;margin:18px 0 4px;
+  overflow:hidden;border:1px solid var(--line);border-radius:14px
+}
+.compare th,.compare td{padding:13px;border-bottom:1px solid var(--line);text-align:center}
+.compare tr:last-child th,.compare tr:last-child td{border-bottom:0}
+.compare th{background:#f7fbff;color:var(--navy)}
+.plan{
+  border:1px solid var(--line);border-radius:17px;padding:18px;margin-top:13px;background:#fff
+}
+.plan.best{border:2px solid var(--blue);box-shadow:0 8px 24px rgba(47,128,237,.10)}
+.rank{font-size:.78rem;font-weight:900;color:var(--blue);margin-bottom:5px}
 .plan-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
-.plan h3{margin:0;color:var(--navy)}
-.price{font-size:1.35rem;font-weight:900;color:var(--green);white-space:nowrap}
-.reason{margin:10px 0 0;color:var(--muted);line-height:1.6}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.tag{background:var(--light);color:var(--navy);padding:5px 9px;border-radius:999px;font-size:.75rem}
-.notice{font-size:.78rem;color:var(--muted);line-height:1.7;margin-top:14px}
-.trouble{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.cta{background:var(--navy);color:#fff;border-radius:20px;padding:24px;margin-top:18px}
+.plan h3{margin:0}
+.price{font-size:1.4rem;font-weight:950;color:var(--green);white-space:nowrap}
+.reason{margin:11px 0 0;color:var(--muted);line-height:1.65}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.tag{background:var(--blue2);color:var(--navy);padding:6px 10px;border-radius:999px;font-size:.75rem}
+.notice{font-size:.78rem;color:var(--muted);line-height:1.7;margin-top:15px}
+.support-intro{
+  background:#f8fbff;border:1px dashed #b9cfe8;border-radius:14px;padding:15px;
+  color:var(--navy);font-weight:800;margin-bottom:16px
+}
+.cta{
+  background:linear-gradient(135deg,#17365d,#204d7f);color:#fff;
+  border-radius:22px;padding:26px;margin-top:18px;box-shadow:var(--shadow)
+}
 .cta h2{color:#fff;margin-top:0}
 .cta p{line-height:1.8;color:#dbe8f7}
-.cta a{display:block;text-align:center;background:#fff;color:var(--navy);text-decoration:none;font-weight:900;padding:14px;border-radius:12px;margin-top:14px}
-footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;margin-top:28px}
-@media(max-width:520px){.options,.trouble{grid-template-columns:1fr}.plan-head{display:block}.price{margin-top:8px}}
+.cta a{
+  display:block;text-align:center;background:#fff;color:var(--navy);text-decoration:none;
+  font-weight:950;padding:15px;border-radius:13px;margin-top:14px
+}
+.cta small{display:block;text-align:center;color:#dbe8f7;margin-top:10px}
+footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;margin-top:30px}
+@media(max-width:600px){
+  .brand-grid,.options,.trouble,.trust-row{grid-template-columns:1fr}
+  .plan-head{display:block}.price{margin-top:8px}
+  .compare th,.compare td{padding:10px 6px;font-size:.9rem}
+}
 </style>
 </head>
 <body>
@@ -61,6 +126,11 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
   <h1>あなたに合う<br>料金プラン診断</h1>
   <p>現在の使い方から、料金とサポートのバランスが合うプランを診断します。</p>
   <div class="loss-copy">そのまま払い続ける前に。毎月、もっと下げられる可能性があります。</div>
+  <div class="trust-row">
+    <div class="trust-item">大手キャリア系のみ比較</div>
+    <div class="trust-item">料金とサポートを診断</div>
+    <div class="trust-item">登録不要で利用可能</div>
+  </div>
 </section>
 
 <section class="card">
@@ -68,20 +138,29 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
   <h2>現在の使い方を教えてください</h2>
 
   <label>現在利用中のブランド</label>
-  <select id="currentCarrier">
-    <option>ドコモ</option><option>ahamo</option><option>au</option><option>povo</option>
-    <option>UQ mobile</option><option>SoftBank</option><option>LINEMO</option><option>Y!mobile</option>
-    <option>その他・わからない</option>
-  </select>
+  <div class="brand-grid">
+    <label class="brand-option"><input type="radio" name="carrier" value="ドコモ" checked>ドコモ</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="ahamo">ahamo</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="au">au</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="povo">povo</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="UQ mobile">UQ mobile</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="SoftBank">SoftBank</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="LINEMO">LINEMO</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="Y!mobile">Y!mobile</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="その他">その他・わからない</label>
+  </div>
 
   <label>現在の月額料金 <span class="help">端末代を除く概算</span></label>
   <input id="currentPrice" type="number" min="0" step="100" value="7000">
 
   <label>月間データ使用量</label>
   <select id="data">
-    <option value="1">1GB以下</option><option value="3">3GB程度</option>
-    <option value="10">10GB程度</option><option value="30" selected>30GB程度</option>
-    <option value="50">50GB以上</option><option value="999">無制限が必要</option>
+    <option value="1">1GB以下</option>
+    <option value="3">3GB程度</option>
+    <option value="10">10GB程度</option>
+    <option value="30" selected>30GB程度</option>
+    <option value="50">50GB以上</option>
+    <option value="999">無制限が必要</option>
   </select>
 
   <label>通話の使い方</label>
@@ -95,7 +174,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
 <section class="card">
   <div class="step">STEP 2</div>
   <h2>重視することを選んでください</h2>
-  <div class="options">
+  <div class="options" id="preferenceOptions">
     <label class="option"><input type="checkbox" value="cheap">料金を下げたい</label>
     <label class="option"><input type="checkbox" value="quality">通信品質を重視</label>
     <label class="option"><input type="checkbox" value="store">店舗サポートが必要</label>
@@ -109,20 +188,28 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
 <section id="result" class="result">
   <div class="card">
     <div class="step">RESULT</div>
-    <h2>診断結果</h2>
+    <h2>あなたの診断結果</h2>
     <div class="summary">
       <div class="small">現在の料金から</div>
       <div class="big" id="monthlySave">月額 約0円</div>
       <div class="year" id="annualSave">年間 約0円</div>
       <div class="small">下げられる可能性があります</div>
     </div>
+
+    <table class="compare" aria-label="現在料金とおすすめ料金の比較">
+      <tr><th></th><th>現在</th><th>おすすめ</th></tr>
+      <tr><th>月額</th><td id="currentMonthly">0円</td><td id="recommendedMonthly">0円</td></tr>
+      <tr><th>年間</th><td id="currentAnnual">0円</td><td id="recommendedAnnual">0円</td></tr>
+    </table>
+
     <div id="plans"></div>
     <p class="notice">表示料金は診断用の概算です。割引、通話料、端末代、キャンペーン、利用条件により実際の料金は異なります。契約前に各社公式サイトまたは店舗で必ず確認してください。</p>
   </div>
 
   <div class="card">
     <div class="step">SMARTPHONE SUPPORT</div>
-    <h2>料金以外のお困りごとも選べます</h2>
+    <h2>料金以外のお困りごとも相談できます</h2>
+    <div class="support-intro">実際には、料金見直しよりも「設定」「ログイン」「ID・パスワード整理」の相談が多く寄せられます。</div>
     <div class="trouble">
       <label class="option"><input type="checkbox">LINEの使い方</label>
       <label class="option"><input type="checkbox">Wi-Fiにつながらない</label>
@@ -139,8 +226,9 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
 
   <div class="cta">
     <h2>一人で決めるのが不安な方へ</h2>
-    <p>料金見直し、契約手続き、初期設定、ID・パスワード整理まで、スマホ相談窓口で一緒に確認します。</p>
-    <a href="https://skyseben-mobile-oomiya.com/" target="_blank" rel="noopener">相談窓口を確認する</a>
+    <p>料金見直し、契約手続き、初期設定、データ移行、ID・パスワード整理まで、スマホ相談窓口で一緒に確認します。</p>
+    <a href="https://skyseben-mobile-oomiya.com/" target="_blank" rel="noopener">スマホ相談窓口を確認する</a>
+    <small>料金以外の相談も承ります</small>
   </div>
 </section>
 
@@ -150,63 +238,89 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
   © スマホ相談窓口
 </footer>
 </main>
+
 <script src="plans.js"></script>
 <script src="version.js"></script>
 <script>
-
-
 function selectedPrefs(){
- return [...document.querySelectorAll('.options input[type=checkbox]:checked')].map(x=>x.value);
+  return [...document.querySelectorAll('#preferenceOptions input[type=checkbox]:checked')]
+    .map(x=>x.value);
 }
+
 function diagnose(){
- const current=Number(document.getElementById('currentPrice').value)||0;
- const data=Number(document.getElementById('data').value);
- const call=document.getElementById('call').value;
- const prefs=selectedPrefs();
+  const current=Number(document.getElementById('currentPrice').value)||0;
+  const data=Number(document.getElementById('data').value);
+  const call=document.getElementById('call').value;
+  const prefs=selectedPrefs();
 
- let list=PLANS.filter(p=>p.data>=data);
- if(!list.length) list=PLANS.filter(p=>p.data===999);
+  let list=PLANS.filter(p=>p.data>=data);
+  if(!list.length) list=PLANS.filter(p=>p.data===999);
 
- list=list.map(p=>{
-   let score=10000-p.price;
-   if(prefs.includes('store')&&p.store)score+=3500;
-   if(prefs.includes('family')&&p.family)score+=1800;
-   if(prefs.includes('quality')&&p.quality)score+=1300;
-   if(prefs.includes('senior')&&p.senior)score+=2500;
-   if(prefs.includes('unlimited')&&p.call==="many")score+=2500;
-   if(call===p.call)score+=1000;
-   return {...p,score};
- }).sort((a,b)=>b.score-a.score).slice(0,3);
+  list=list.map(p=>{
+    let score=10000-p.price;
+    if(prefs.includes('cheap')) score+=Math.max(0,5000-p.price);
+    if(prefs.includes('store')&&p.store) score+=3500;
+    if(prefs.includes('family')&&p.family) score+=1800;
+    if(prefs.includes('quality')&&p.quality) score+=1300;
+    if(prefs.includes('senior')&&p.senior) score+=2500;
+    if(prefs.includes('unlimited')&&p.call==="many") score+=2500;
+    if(call===p.call) score+=1000;
+    return {...p,score};
+  }).sort((a,b)=>b.score-a.score).slice(0,3);
 
- const best=list[0];
- const save=Math.max(0,current-best.price);
- document.getElementById('monthlySave').textContent="月額 約"+save.toLocaleString()+"円";
- document.getElementById('annualSave').textContent="年間 約"+(save*12).toLocaleString()+"円";
+  const best=list[0];
+  const save=Math.max(0,current-best.price);
 
- const box=document.getElementById('plans');
- box.innerHTML=list.map((p,i)=>{
-   const reasons=[];
-   if(p.store)reasons.push("店舗で相談しやすい");
-   if(p.family)reasons.push("家族利用と相性がよい");
-   if(p.quality)reasons.push("大手キャリア回線");
-   if(p.senior)reasons.push("対面サポートを重視する方に向く");
-   return `<div class="plan ${i===0?'best':''}">
-    <div class="plan-head"><div><h3>${i===0?'おすすめ：':''}${p.brand}</h3><div>${p.name}</div></div>
-    <div class="price">約${p.price.toLocaleString()}円/月</div></div>
-    <p class="reason">${reasons.slice(0,2).join("・")||"オンライン手続きで料金を抑えやすい"}</p>
-    <div class="tags">${p.store?'<span class="tag">店舗対応</span>':''}${p.family?'<span class="tag">家族向け</span>':''}${p.senior?'<span class="tag">シニア向け</span>':''}</div>
-   </div>`;
- }).join("");
+  document.getElementById('monthlySave').textContent=
+    "月額 約"+save.toLocaleString()+"円";
+  document.getElementById('annualSave').textContent=
+    "年間 約"+(save*12).toLocaleString()+"円";
+  document.getElementById('currentMonthly').textContent=
+    current.toLocaleString()+"円";
+  document.getElementById('recommendedMonthly').textContent=
+    best.price.toLocaleString()+"円";
+  document.getElementById('currentAnnual').textContent=
+    (current*12).toLocaleString()+"円";
+  document.getElementById('recommendedAnnual').textContent=
+    (best.price*12).toLocaleString()+"円";
 
- document.getElementById('result').classList.add('show');
- document.getElementById('result').scrollIntoView({behavior:'smooth'});
+  const box=document.getElementById('plans');
+  box.innerHTML=list.map((p,i)=>{
+    const reasons=[];
+    if(p.store) reasons.push("店舗で相談しやすい");
+    if(p.family) reasons.push("家族利用と相性がよい");
+    if(p.quality) reasons.push("大手キャリア回線");
+    if(p.senior) reasons.push("対面サポートを重視する方に向く");
+    if(!p.store) reasons.push("オンライン手続きで料金を抑えやすい");
+
+    return `<div class="plan ${i===0?'best':''}">
+      <div class="rank">${i===0?'おすすめ1位':'おすすめ'+(i+1)+'位'}</div>
+      <div class="plan-head">
+        <div>
+          <h3>${p.brand}</h3>
+          <div>${p.name}</div>
+        </div>
+        <div class="price">約${p.price.toLocaleString()}円/月</div>
+      </div>
+      <p class="reason">${reasons.slice(0,3).join("・")}</p>
+      <div class="tags">
+        ${p.store?'<span class="tag">店舗対応</span>':''}
+        ${p.family?'<span class="tag">家族向け</span>':''}
+        ${p.senior?'<span class="tag">シニア向け</span>':''}
+        ${p.quality?'<span class="tag">大手回線</span>':''}
+      </div>
+    </div>`;
+  }).join("");
+
+  document.getElementById('result').classList.add('show');
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
 }
-  document.getElementById("versionInfo").textContent =
-  "Version " + APP_VERSION.version +
-  "｜料金情報確認日：" + APP_VERSION.priceCheckedAt;
 
+if(typeof APP_VERSION!=="undefined"){
+  document.getElementById("versionInfo").textContent =
+    "Version " + APP_VERSION.version +
+    "｜料金情報確認日：" + APP_VERSION.priceCheckedAt;
+}
 </script>
 </body>
 </html>
-
-
