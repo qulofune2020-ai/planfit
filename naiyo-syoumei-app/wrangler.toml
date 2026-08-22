@@ -1,0 +1,11 @@
+name = "naiyo-syoumei-app"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+# ANTHROPIC_API_KEY はコミットせず、下記コマンドでシークレット登録する。
+#   wrangler secret put ANTHROPIC_API_KEY
+# ローカル開発では .dev.vars に ANTHROPIC_API_KEY=sk-... を書く（.gitignore済み）。
+
+[vars]
+# 機密でない設定値のみここに置く（例: 許可オリジン）
+ALLOWED_ORIGINS = "https://naiyo-syoumei.com,https://mobile.qulofune-office.jp"
