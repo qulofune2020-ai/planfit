@@ -45,22 +45,28 @@ export default {
         return json({ error: "invalid_json" }, 400, cors);
       }
 
-      const { scenarioId, facts, useMock } = body ?? {};
+      const { scenarioId, facts, senderName, recipientName, documentDate, useMock } = body ?? {};
       if (!scenarioId || !SUPPORTED_SCENARIOS.includes(scenarioId)) {
         return json({ error: "unsupported_scenario", scenarioId }, 400, cors);
       }
 
       try {
-        const ruleResult = evaluateScenario(scenarioId, facts ?? {});
-        if (!ruleResult.eligible) {
+        const evaluation = evaluateScenario(scenarioId, facts ?? {});
+        if (evaluation.blocked) {
           return json(
-            { error: "blocked_by_rule_engine", reason: ruleResult.blockedReason, warnings: ruleResult.warnings },
+            { error: "blocked_by_rule_engine", pattern: evaluation.pattern, warnings: evaluation.warnings },
             422,
             cors
           );
         }
 
-        const doc = buildDocument(scenarioId, ruleResult.scenarioData, facts ?? {});
+        const common = {
+          senderName,
+          recipientName,
+          documentDate: documentDate || new Date().toISOString().slice(0, 10),
+        };
+
+        const doc = buildDocument(evaluation, common);
 
         const polished = await polishText({
           text: doc.text,
@@ -72,7 +78,8 @@ export default {
         return json(
           {
             scenarioId,
-            warnings: ruleResult.warnings,
+            pattern: evaluation.pattern,
+            warnings: evaluation.warnings,
             text: polished.text,
             guardrailPassed: polished.guardrailPassed,
             usedAi: polished.usedAi,
