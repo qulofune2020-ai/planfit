@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内容証明自動作成（書面作成支援）</title>
+<style>
+  :root { --navy:#17365d; --blue:#2f80ed; --line:#d9e6f3; --text:#243447; --muted:#62748a; --danger:#b65a28; }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;color:var(--text);margin:0;background:#f7fbff}
+  .container{max-width:720px;margin:0 auto;padding:24px 16px 80px}
+  h1{font-size:1.5rem;color:var(--navy)}
+  .notice{background:#fff8f1;border:1px solid #ffd8ba;border-radius:10px;padding:14px;color:#7a431e;font-size:.9rem;margin-bottom:20px}
+  label{display:block;font-weight:700;margin:14px 0 6px}
+  .help{font-weight:400;color:var(--muted);font-size:.8rem}
+  input[type=text],input[type=date],input[type=number],select,textarea{
+    width:100%;padding:10px;border:1px solid #bfd0e2;border-radius:8px;font-size:1rem;background:#fff
+  }
+  .checkbox-row{display:flex;align-items:center;gap:8px;font-weight:400;margin:6px 0}
+  .checkbox-row input{width:auto}
+  fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:18px}
+  legend{font-weight:800;color:var(--navy);padding:0 6px}
+  button{margin-top:20px;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:1rem;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.6;cursor:default}
+  #result{margin-top:24px;white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;font-size:.92rem;line-height:1.7}
+  .warning{color:var(--danger);font-weight:700}
+  .meta{font-size:.8rem;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>内容証明 書面作成支援</h1>
+  <div class="notice">
+    本ツールは書面作成の支援を行うものであり、交渉や代理を行うものではありません。
+    法的な当否（時効の成否・法定期間内かどうか）はAIではなく機械的な判定で決定され、
+    AIは文体の調整のみを行います。
+  </div>
+
+  <label>API接続先URL <span class="help">（Cloudflare Workersのデプロイ先。例: https://naiyo-syoumei-app.your-subdomain.workers.dev）</span></label>
+  <input type="text" id="apiBase" placeholder="https://naiyo-syoumei-app.your-subdomain.workers.dev">
+
+  <fieldset>
+    <legend>共通項目</legend>
+    <label>通知人（あなたの氏名）</label>
+    <input type="text" id="senderName">
+    <label>被通知人（相手方の氏名） <span class="help">不倫慰謝料請求の場合のみ使用</span></label>
+    <input type="text" id="recipientName">
+    <div class="checkbox-row">
+      <input type="checkbox" id="useMock">
+      <label style="margin:0">モックモード（実際のAI APIを呼ばずに動作確認する）</label>
+    </div>
+  </fieldset>
+
+  <label>シナリオ</label>
+  <select id="scenarioId">
+    <option value="jikou_enyou">消滅時効の援用（貸金業者）</option>
+    <option value="furin_isharyou">不倫慰謝料請求</option>
+    <option value="zangyou_pawahara">残業代・パワハラ・退職トラブル</option>
+    <option value="cooling_off">契約解除・クーリングオフ通知</option>
+  </select>
+
+  <fieldset id="fields-jikou_enyou">
+    <legend>消滅時効の援用（貸金業者）</legend>
+    <label>業者名</label>
+    <input type="text" data-field="companyName">
+    <label>契約番号</label>
+    <input type="text" data-field="contractNo">
+    <label>最終取引日</label>
+    <input type="date" data-field="lastTransactionDate">
+    <label>借入額（円）</label>
+    <input type="number" data-field="debtAmount">
+    <div class="checkbox-row">
+      <input type="checkbox" data-field="hasInterruption" data-type="checkbox">
+      <label style="margin:0">時効中断事由（承認・訴訟等）がある</label>
+    </div>
+  </fieldset>
+
+  <fieldset id="fields-furin_isharyou" style="display:none">
+    <legend>不倫慰謝料請求</legend>
+    <label>請求先</label>
+    <select data-field="target">
+      <option value="partner">不貞相手</option>
+      <option value="spouse">配偶者</option>
+    </select>
+    <label>発覚日</label>
+    <input type="date" data-field="discoveryDate">
+    <label>証拠 <span class="help">（該当するものにチェック。未チェックなら協議申入れ文に自動切替）</span></label>
+    <div class="checkbox-row"><input type="checkbox" data-field="evidenceTypes" value="line"><label style="margin:0">LINE等のメッセージ履歴</label></div>
+    <div class="checkbox-row"><input type="checkbox" data-field="evidenceTypes" value="photo"><label style="margin:0">写真</label></div>
+    <div class="checkbox-row"><input type="checkbox" data-field="evidenceTypes" value="detective"><label style="margin:0">探偵による調査報告書</label></div>
+    <div class="checkbox-row"><input type="checkbox" data-field="evidenceTypes" value="witness"><label style="margin:0">目撃者の証言</label></div>
+    <label>婚姻期間（年）</label>
+    <input type="number" data-field="marriageYears">
+    <label>請求希望額（円） <span class="help">証拠なしの場合は文面に反映されません</span></label>
+    <input type="number" data-field="requestedAmount">
+  </fieldset>
+
+  <fieldset id="fields-zangyou_pawahara" style="display:none">
+    <legend>残業代・パワハラ・退職トラブル</legend>
+    <label>請求先の会社名</label>
+    <input type="text" data-field="companyName">
+    <label>請求内容</label>
+    <div class="checkbox-row"><input type="checkbox" data-field="claimTypes" value="overtime"><label style="margin:0">未払い残業代</label></div>
+    <div class="checkbox-row"><input type="checkbox" data-field="claimTypes" value="unpaid_wage"><label style="margin:0">未払い賃金</label></div>
+    <div class="checkbox-row"><input type="checkbox" data-field="claimTypes" value="harassment"><label style="margin:0">パワーハラスメントに基づく慰謝料</label></div>
+    <label>最終給料日</label>
+    <input type="date" data-field="lastPayDate">
+    <label>退職日 <span class="help">任意</span></label>
+    <input type="date" data-field="retirementDate">
+    <label>未払額（概算・円）</label>
+    <input type="number" data-field="unpaidAmount">
+    <label>パワハラ被害期間（月数） <span class="help">任意</span></label>
+    <input type="number" data-field="harassmentMonths">
+  </fieldset>
+
+  <fieldset id="fields-cooling_off" style="display:none">
+    <legend>契約解除・クーリングオフ通知</legend>
+    <label>契約先の会社名</label>
+    <input type="text" data-field="companyName">
+    <label>契約日</label>
+    <input type="date" data-field="contractDate">
+    <label>契約類型</label>
+    <select data-field="contractType">
+      <option value="door_to_door">訪問販売（8日）</option>
+      <option value="phone_solicitation">電話勧誘販売（8日）</option>
+      <option value="multilevel_marketing">連鎖販売取引（20日）</option>
+      <option value="continuous_service">特定継続的役務提供（8日）</option>
+    </select>
+    <label>商品・サービス名</label>
+    <input type="text" data-field="productName">
+    <label>既払金額（円）</label>
+    <input type="number" data-field="paidAmount">
+  </fieldset>
+
+  <button id="submitBtn" type="button">通知書を作成する</button>
+
+  <div id="result" style="display:none"></div>
+</div>
+
+<script>
+const SCENARIOS = ["jikou_enyou", "furin_isharyou", "zangyou_pawahara", "cooling_off"];
+
+const scenarioSelect = document.getElementById("scenarioId");
+scenarioSelect.addEventListener("change", () => {
+  SCENARIOS.forEach((id) => {
+    document.getElementById("fields-" + id).style.display = id === scenarioSelect.value ? "block" : "none";
+  });
+});
+
+function collectFacts(scenarioId) {
+  const fieldset = document.getElementById("fields-" + scenarioId);
+  const facts = {};
+
+  fieldset.querySelectorAll("[data-field]").forEach((el) => {
+    const key = el.dataset.field;
+    if (el.type === "checkbox" && el.dataset.type === "checkbox") {
+      facts[key] = el.checked;
+    } else if (el.type === "checkbox") {
+      if (!Array.isArray(facts[key])) facts[key] = [];
+      if (el.checked) facts[key].push(el.value);
+    } else if (el.type === "number") {
+      facts[key] = el.value === "" ? undefined : Number(el.value);
+    } else {
+      facts[key] = el.value || undefined;
+    }
+  });
+
+  return facts;
+}
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  const apiBase = document.getElementById("apiBase").value.trim().replace(/\/$/, "");
+  const resultEl = document.getElementById("result");
+  const btn = document.getElementById("submitBtn");
+
+  if (!apiBase) {
+    alert("API接続先URLを入力してください。");
+    return;
+  }
+
+  const scenarioId = scenarioSelect.value;
+  const body = {
+    scenarioId,
+    facts: collectFacts(scenarioId),
+    senderName: document.getElementById("senderName").value || undefined,
+    recipientName: document.getElementById("recipientName").value || undefined,
+    useMock: document.getElementById("useMock").checked,
+  };
+
+  btn.disabled = true;
+  btn.textContent = "作成中...";
+  resultEl.style.display = "block";
+  resultEl.textContent = "送信中...";
+
+  try {
+    const res = await fetch(apiBase + "/api/generate", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      const warnings = (data.warnings || []).join("\n");
+      resultEl.innerHTML = '<span class="warning">生成をブロックしました（' + (data.error || "エラー") + '）</span>\n\n' + (warnings || data.message || "");
+      return;
+    }
+
+    let meta = "";
+    if (data.warnings && data.warnings.length > 0) {
+      meta += '<div class="warning">' + data.warnings.join("\n") + "</div>";
+    }
+    meta += '<div class="meta">AI調整: ' + (data.usedAi ? "適用済み" : "未適用（原文採用）") +
+      " / ガードレール: " + (data.guardrailPassed ? "通過" : "不一致検出のため原文採用") + "</div>";
+
+    resultEl.innerHTML = meta + "\n\n" + data.text;
+  } catch (err) {
+    resultEl.textContent = "通信エラー: " + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "通知書を作成する";
+  }
+});
+</script>
+</body>
+</html>
