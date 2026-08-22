@@ -1,0 +1,15 @@
+{
+  "name": "naiyo-syoumei-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "内容証明自動作成アプリ（Cloudflare Workers版）",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
