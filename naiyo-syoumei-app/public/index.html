@@ -141,11 +141,22 @@
 const SCENARIOS = ["jikou_enyou", "furin_isharyou", "zangyou_pawahara", "cooling_off"];
 
 const scenarioSelect = document.getElementById("scenarioId");
-scenarioSelect.addEventListener("change", () => {
+
+function showFieldsFor(scenarioId) {
   SCENARIOS.forEach((id) => {
-    document.getElementById("fields-" + id).style.display = id === scenarioSelect.value ? "block" : "none";
+    document.getElementById("fields-" + id).style.display = id === scenarioId ? "block" : "none";
   });
-});
+}
+
+scenarioSelect.addEventListener("change", () => showFieldsFor(scenarioSelect.value));
+
+// 記事側のCTAリンクから ?scenario=jikou_enyou のように渡された場合、
+// 該当シナリオを自動選択する（例: 時効援用の記事から直接そのフォームを開く）。
+const requestedScenario = new URLSearchParams(location.search).get("scenario");
+if (requestedScenario && SCENARIOS.includes(requestedScenario)) {
+  scenarioSelect.value = requestedScenario;
+}
+showFieldsFor(scenarioSelect.value);
 
 function collectFacts(scenarioId) {
   const fieldset = document.getElementById("fields-" + scenarioId);
