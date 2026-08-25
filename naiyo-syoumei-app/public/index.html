@@ -25,6 +25,7 @@
   #result{margin-top:24px;white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;font-size:.92rem;line-height:1.7}
   .warning{color:var(--danger);font-weight:700}
   .meta{font-size:.8rem;color:var(--muted);margin-top:8px}
+  #priceInfo{margin:6px 0 0;font-weight:700;color:var(--navy)}
 </style>
 </head>
 <body>
@@ -47,7 +48,7 @@
     <input type="text" id="recipientName">
     <div class="checkbox-row">
       <input type="checkbox" id="useMock">
-      <label style="margin:0">モックモード（実際のAI APIを呼ばずに動作確認する）</label>
+      <label style="margin:0">モックモード（テスト用。実際のAI APIを呼ばず、料金も発生しません）</label>
     </div>
   </fieldset>
 
@@ -58,6 +59,7 @@
     <option value="zangyou_pawahara">残業代・パワハラ・退職トラブル</option>
     <option value="cooling_off">契約解除・クーリングオフ通知</option>
   </select>
+  <div id="priceInfo" class="help"></div>
 
   <fieldset id="fields-jikou_enyou">
     <legend>消滅時効の援用（貸金業者）</legend>
@@ -140,7 +142,13 @@
 <script>
 const SCENARIOS = ["jikou_enyou", "furin_isharyou", "zangyou_pawahara", "cooling_off"];
 
+const apiBaseInput = document.getElementById("apiBase");
 const scenarioSelect = document.getElementById("scenarioId");
+const priceInfoEl = document.getElementById("priceInfo");
+const resultEl = document.getElementById("result");
+const submitBtn = document.getElementById("submitBtn");
+
+let priceTable = {};
 
 function showFieldsFor(scenarioId) {
   SCENARIOS.forEach((id) => {
@@ -148,7 +156,30 @@ function showFieldsFor(scenarioId) {
   });
 }
 
-scenarioSelect.addEventListener("change", () => showFieldsFor(scenarioSelect.value));
+function updatePriceDisplay() {
+  const price = priceTable[scenarioSelect.value];
+  priceInfoEl.textContent = price
+    ? "料金: ¥" + price.toLocaleString("ja-JP") + "（税込・モックモードでは課金されません）"
+    : "";
+}
+
+async function loadPricing() {
+  const apiBase = apiBaseInput.value.trim().replace(/\/$/, "");
+  if (!apiBase) return;
+  try {
+    const res = await fetch(apiBase + "/api/pricing");
+    const data = await res.json();
+    priceTable = data.prices || {};
+    updatePriceDisplay();
+  } catch {
+    // 料金取得に失敗しても入力自体は続行できるようにする
+  }
+}
+
+scenarioSelect.addEventListener("change", () => {
+  showFieldsFor(scenarioSelect.value);
+  updatePriceDisplay();
+});
 
 // 記事側のCTAリンクから ?scenario=jikou_enyou のように渡された場合、
 // 該当シナリオを自動選択する（例: 時効援用の記事から直接そのフォームを開く）。
@@ -157,6 +188,17 @@ if (requestedScenario && SCENARIOS.includes(requestedScenario)) {
   scenarioSelect.value = requestedScenario;
 }
 showFieldsFor(scenarioSelect.value);
+
+// Stripe決済からの復帰時もAPI接続先が必要なため、直前の入力をlocalStorageに覚えておく。
+const savedApiBase = localStorage.getItem("apiBase");
+if (savedApiBase) {
+  apiBaseInput.value = savedApiBase;
+}
+apiBaseInput.addEventListener("change", () => {
+  localStorage.setItem("apiBase", apiBaseInput.value.trim());
+  loadPricing();
+});
+loadPricing();
 
 function collectFacts(scenarioId) {
   const fieldset = document.getElementById("fields-" + scenarioId);
@@ -178,60 +220,118 @@ function collectFacts(scenarioId) {
 
   return facts;
 }
+  
+function renderResult(data, ok) {
+  resultEl.style.display = "block";
 
-document.getElementById("submitBtn").addEventListener("click", async () => {
-  const apiBase = document.getElementById("apiBase").value.trim().replace(/\/$/, "");
-  const resultEl = document.getElementById("result");
-  const btn = document.getElementById("submitBtn");
+  if (!ok) {
+    const warnings = (data.warnings || []).join("\n");
+    resultEl.innerHTML = '<span class="warning">生成をブロックしました（' + (data.error || "エラー") + '）</span>\n\n' + (warnings || data.message || "");
+    return;
+  }
 
+  let meta = "";
+  if (data.warnings && data.warnings.length > 0) {
+    meta += '<div class="warning">' + data.warnings.join("\n") + "</div>";
+  }
+  meta += '<div class="meta">AI調整: ' + (data.usedAi ? "適用済み" : "未適用（原文採用）") +
+    " / ガードレール: " + (data.guardrailPassed ? "通過" : "不一致検出のため原文採用") + "</div>";
+
+  resultEl.innerHTML = meta + "\n\n" + data.text;
+}
+
+submitBtn.addEventListener("click", async () => {
+  const apiBase = apiBaseInput.value.trim().replace(/\/$/, "");
   if (!apiBase) {
     alert("API接続先URLを入力してください。");
     return;
   }
+  localStorage.setItem("apiBase", apiBase);
 
   const scenarioId = scenarioSelect.value;
-  const body = {
-    scenarioId,
-    facts: collectFacts(scenarioId),
+  const useMock = document.getElementById("useMock").checked;
+  const common = {
     senderName: document.getElementById("senderName").value || undefined,
     recipientName: document.getElementById("recipientName").value || undefined,
-    useMock: document.getElementById("useMock").checked,
   };
 
-  btn.disabled = true;
-  btn.textContent = "作成中...";
+  submitBtn.disabled = true;
   resultEl.style.display = "block";
-  resultEl.textContent = "送信中...";
 
+  if (useMock) {
+    submitBtn.textContent = "作成中...";
+    resultEl.textContent = "送信中...";
+    try {
+      const res = await fetch(apiBase + "/api/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scenarioId, facts: collectFacts(scenarioId), ...common, useMock: true }),
+      });
+      const data = await res.json();
+      renderResult(data, res.ok);
+    } catch (err) {
+      resultEl.textContent = "通信エラー: " + err.message;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "通知書を作成する";
+    }
+    return;
+  }
+
+  submitBtn.textContent = "お支払いへ進む...";
+  resultEl.textContent = "決済ページへ移動しています...";
   try {
-    const res = await fetch(apiBase + "/api/generate", {
+    const pageUrl = location.origin + location.pathname;
+    const res = await fetch(apiBase + "/api/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        scenarioId,
+        facts: collectFacts(scenarioId),
+        ...common,
+        successUrl: pageUrl,
+        cancelUrl: pageUrl,
+      }),
     });
     const data = await res.json();
+    if (!res.ok || !data.checkoutUrl) {
+      renderResult(data, false);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "通知書を作成する";
+      return;
+    }
+    location.href = data.checkoutUrl;
+  } catch (err) {
+    resultEl.textContent = "通信エラー: " + err.message;
+    submitBtn.disabled = false;
+    submitBtn.textContent = "通知書を作成する";
+  }
+});
 
-    if (!res.ok) {
-      const warnings = (data.warnings || []).join("\n");
-      resultEl.innerHTML = '<span class="warning">生成をブロックしました（' + (data.error || "エラー") + '）</span>\n\n' + (warnings || data.message || "");
+// Stripe Checkoutからの復帰処理（?session_id=... 付きでこのページに戻ってくる）。
+  
+const returnedSessionId = new URLSearchParams(location.search).get("session_id");
+if (returnedSessionId) {
+  (async () => {
+    resultEl.style.display = "block";
+    resultEl.textContent = "お支払いを確認しています...";
+
+    const apiBase = apiBaseInput.value.trim().replace(/\/$/, "");
+    if (!apiBase) {
+      resultEl.textContent =
+        "API接続先URLが分からないため確認できません。お手数ですがAPI接続先URLを入力の上、サポートまでお問い合わせください（セッションID: " + returnedSessionId + "）。";
       return;
     }
 
-    let meta = "";
-    if (data.warnings && data.warnings.length > 0) {
-      meta += '<div class="warning">' + data.warnings.join("\n") + "</div>";
+    try {
+      const res = await fetch(apiBase + "/api/checkout/result?session_id=" + encodeURIComponent(returnedSessionId));
+      const data = await res.json();
+      renderResult(data, res.ok);
+    } catch (err) {
+      resultEl.textContent = "通信エラー: " + err.message;
     }
-    meta += '<div class="meta">AI調整: ' + (data.usedAi ? "適用済み" : "未適用（原文採用）") +
-      " / ガードレール: " + (data.guardrailPassed ? "通過" : "不一致検出のため原文採用") + "</div>";
-
-    resultEl.innerHTML = meta + "\n\n" + data.text;
-  } catch (err) {
-    resultEl.textContent = "通信エラー: " + err.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "通知書を作成する";
-  }
-});
+  })();
+}
 </script>
 </body>
 </html>
