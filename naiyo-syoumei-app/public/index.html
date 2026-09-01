@@ -37,8 +37,10 @@
     AIは文体の調整のみを行います。
   </div>
 
-  <label>API接続先URL <span class="help">（Cloudflare Workersのデプロイ先。例: https://naiyo-syoumei-app.your-subdomain.workers.dev）</span></label>
-  <input type="text" id="apiBase" placeholder="https://naiyo-syoumei-app.your-subdomain.workers.dev">
+  <div id="apiBaseField" style="display:none">
+    <label>API接続先URL <span class="help">（動作確認用。通常は自動設定されるため変更不要）</span></label>
+    <input type="text" id="apiBase" placeholder="https://naiyo-syoumei-app.your-subdomain.workers.dev">
+  </div>
 
   <fieldset>
     <legend>共通項目</legend>
@@ -138,7 +140,6 @@
 
   <div id="result" style="display:none"></div>
 </div>
-
 <script>
 const SCENARIOS = ["jikou_enyou", "furin_isharyou", "zangyou_pawahara", "cooling_off"];
 
@@ -189,11 +190,11 @@ if (requestedScenario && SCENARIOS.includes(requestedScenario)) {
 }
 showFieldsFor(scenarioSelect.value);
 
-// Stripe決済からの復帰時もAPI接続先が必要なため、直前の入力をlocalStorageに覚えておく。
+// このフォーム自体がAPIと同じオリジンで配信されているため、
+// 通常は自分自身のURLがAPI接続先になる。開発時の動作確認用に
+// 別オリジンを指定したい場合のみ、localStorageの保存値を優先する。
 const savedApiBase = localStorage.getItem("apiBase");
-if (savedApiBase) {
-  apiBaseInput.value = savedApiBase;
-}
+apiBaseInput.value = savedApiBase || location.origin;
 apiBaseInput.addEventListener("change", () => {
   localStorage.setItem("apiBase", apiBaseInput.value.trim());
   loadPricing();
@@ -239,8 +240,7 @@ function renderResult(data, ok) {
 
   resultEl.innerHTML = meta + "\n\n" + data.text;
 }
-
-submitBtn.addEventListener("click", async () => {
+  submitBtn.addEventListener("click", async () => {
   const apiBase = apiBaseInput.value.trim().replace(/\/$/, "");
   if (!apiBase) {
     alert("API接続先URLを入力してください。");
