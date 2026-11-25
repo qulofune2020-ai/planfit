@@ -82,3 +82,10 @@ test("契約診断：自由入力の契約は実額で節約額に加える", ()
   assert.strictEqual(r.unknown.length, 1);
   assert.ok(C.bringList(r).find(i => i.name.includes("クレジットカード")).focus);
 });
+
+test("安全診断：未確認が残っていれば高得点でも「安心」にしない", () => {
+  const r = C.scoreSafety({ ...allSafe, wifi: "unknown" });
+  assert.ok(r.score >= 80);
+  assert.strictEqual(r.rank, "未確認あり");
+  assert.strictEqual(r.okCount, C.SAFETY_QUESTIONS.length - 1);
+});

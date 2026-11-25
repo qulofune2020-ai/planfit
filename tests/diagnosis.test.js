@@ -65,3 +65,9 @@ test("Y!mobile シンプル3 L は10分かけ放題込み", () => {
   assert.strictEqual(D.monthlyCost(L, "short").total, 5478);
   assert.strictEqual(D.monthlyCost(L, "unlimited").total, 5478 + 1100);
 });
+
+test("料金確認日からの経過日数", () => {
+  assert.strictEqual(D.priceAgeDays("2026-11-25", new Date("2026-11-25T12:00:00+09:00")), 0);
+  assert.strictEqual(D.priceAgeDays("2026-11-25", new Date("2027-01-09T09:00:00+09:00")), 45);
+  assert.strictEqual(D.priceAgeDays("bad"), null);
+});

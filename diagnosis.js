@@ -150,7 +150,16 @@
     };
   }
 
-  const api = { diagnose, monthlyCost, callNeed, estimateCurrentPrice, encodeInput, decodeInput };
+  // 料金確認日から何日たったか（checkedAt: "YYYY-MM-DD"、日本時間の日付として扱う）
+  function priceAgeDays(checkedAt, now = new Date()) {
+    const [y, m, d] = String(checkedAt).split("-").map(Number);
+    if (!y || !m || !d) return null;
+    const checked = Date.UTC(y, m - 1, d) - 9 * 3600 * 1000; // JST 0:00
+    return Math.floor((now.getTime() - checked) / 86400000);
+  }
+  const PRICE_STALE_DAYS = 45; // 毎月の料金チェック＋余裕
+
+  const api = { priceAgeDays, PRICE_STALE_DAYS, diagnose, monthlyCost, callNeed, estimateCurrentPrice, encodeInput, decodeInput };
   if (typeof module !== "undefined") module.exports = api;
   else root.PlanFit = api;
 })(this);
