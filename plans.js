@@ -138,7 +138,7 @@ const PLANS = [
   },
   {
     brand: "Y!mobile", name: "Y!mobile シンプル3 L（35GB）", price: 5478, data: 35,
-    callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
+    callIncluded: "10min", callOptions: { short: 0, unlimited: 1100 },
     store: true, family: true, quality: true, senior: true,
     officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25"
   }

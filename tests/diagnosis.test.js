@@ -59,3 +59,9 @@ test("プランデータの必須項目がそろっている", () => {
     assert.ok(["none", "5min", "10min", "unlimited"].includes(p.callIncluded), p.name);
   }
 });
+
+test("Y!mobile シンプル3 L は10分かけ放題込み", () => {
+  const L = PLANS.find(p => p.name.includes("シンプル3 L"));
+  assert.strictEqual(D.monthlyCost(L, "short").total, 5478);
+  assert.strictEqual(D.monthlyCost(L, "unlimited").total, 5478 + 1100);
+});
