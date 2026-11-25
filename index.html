@@ -197,10 +197,41 @@ input[type=number]:disabled{background:#f1f5f9;color:#9aa9ba}
 .bring-notes{margin-top:14px;font-size:.82rem;color:var(--navy);line-height:1.7}
 .bring-notes p{margin:4px 0}
 .ghost{width:100%;margin-top:12px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:11px;padding:12px;font-weight:800;cursor:pointer}
+.skip{position:absolute;left:8px;top:-60px;background:#fff;color:var(--navy);padding:10px 14px;border-radius:10px;font-weight:800;z-index:20}
+.skip:focus{top:8px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,label:has(input:focus-visible){outline:3px solid #1166b0;outline-offset:2px}
+.custom-box{margin-top:18px;border:1px dashed #b9cfe8;border-radius:16px;padding:16px;background:#f8fbff}
+.custom-box h3{margin:0 0 6px;font-size:1rem}
+.custom-row{display:grid;grid-template-columns:1fr 110px 140px 40px;gap:8px;margin:8px 0;align-items:center}
+.custom-row input,.custom-row select{width:100%;min-width:0;padding:11px;border:1px solid #bfd0e2;border-radius:10px;background:#fff}
+.custom-row .remove{border:1px solid #f0c9c4;background:#fff6f4;color:#a1352f;border-radius:10px;min-height:44px;font-weight:800;cursor:pointer}
+.report-actions{margin-top:18px;border-top:1px solid var(--line);padding-top:4px}
+.ghost.danger{border-color:#e7b7b2;color:#a1352f}
+.print-only{display:none}
+@media(max-width:600px){.custom-row{grid-template-columns:1fr 90px 40px}.custom-row select{grid-column:1/-1;grid-row:2}}
+@media print{
+  @page{size:A4;margin:14mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:10pt}
+  body > *:not(main),main > *:not(#report){display:none!important}
+  .container{padding:0;max-width:none}
+  #report{display:block!important;color:#1c2b3a}
+  #report h1{font-size:18pt;margin:0 0 2px;color:#17365d}
+  #report h2{font-size:12.5pt;margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid #17365d;color:#17365d}
+  #report table{width:100%;border-collapse:collapse;font-size:9.5pt}
+  #report th,#report td{border:1px solid #cfd8e3;padding:5px 7px;text-align:left;vertical-align:top}
+  #report th{background:#f1f6fb;width:28%}
+  #report ul{margin:4px 0;padding-left:1.3em;font-size:9.5pt}
+  #report .meta{font-size:9pt;color:#555;margin:0}
+  #report .box{page-break-inside:avoid}
+  #report .foot{margin-top:16px;border-top:1px solid #ccc;padding-top:6px;font-size:8.5pt;color:#555}
+  #report .check{display:inline-block;width:11px;height:11px;border:1px solid #333;margin-right:5px;vertical-align:-1px}
+}
 </style>
 </head>
 <body>
-<main class="container">
+<a class="skip" href="#main">本文へスキップ</a>
+<main class="container" id="main">
 <section class="hero">
   <span class="badge">3つの診断・各1分・無料</span>
   <h1>あなたのスマホ<br>まるごと診断</h1>
@@ -235,6 +266,8 @@ input[type=number]:disabled{background:#f1f5f9;color:#9aa9ba}
     <label class="brand-option"><input type="radio" name="carrier" value="SoftBank">SoftBank</label>
     <label class="brand-option"><input type="radio" name="carrier" value="LINEMO">LINEMO</label>
     <label class="brand-option"><input type="radio" name="carrier" value="Y!mobile">Y!mobile</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="楽天モバイル">楽天モバイル</label>
+    <label class="brand-option"><input type="radio" name="carrier" value="スカイセブンモバイル">スカイセブンモバイル</label>
     <label class="brand-option"><input type="radio" name="carrier" value="その他">その他・わからない</label>
   </div>
 
@@ -321,6 +354,12 @@ input[type=number]:disabled{background:#f1f5f9;color:#9aa9ba}
   <h2>ムダな契約がないかチェック</h2>
   <p class="lead">それぞれ当てはまるものを選んでください。「使っていない」を選んだ分が、毎月の節約候補になります。</p>
   <div id="contractItems" class="qlist"></div>
+  <div class="custom-box">
+    <h3>上にない契約を追加</h3>
+    <p class="lead">請求明細やマイページを見ながら、サービス名と月額を入力できます。金額は実額で計算します。<br><strong>🔒 パスワードや暗証番号は入力しないでください。</strong></p>
+    <div id="customContracts"></div>
+    <button type="button" class="ghost" id="addCustom">＋ 契約を追加する</button>
+  </div>
   <button class="btn" id="contractBtn" type="button">契約診断の結果を見る</button>
 </section>
 <section class="card result" id="contractResult" aria-live="polite"></section>
@@ -347,6 +386,11 @@ input[type=number]:disabled{background:#f1f5f9;color:#9aa9ba}
       <pre id="memoText"></pre>
       <button type="button" id="copyMemo">相談メモをコピー</button>
     </div>
+    <div class="report-actions">
+      <button type="button" class="btn" id="printReport">📄 診断書を印刷・PDF保存</button>
+      <button type="button" class="ghost danger" id="clearAll">全入力を消去（共有端末で使ったあとに）</button>
+      <p class="notice">診断の内容はこの端末のブラウザ内だけで扱い、どこにも送信しません。お店などの共有端末で使ったあとは「全入力を消去」を押してください。</p>
+    </div>
   </div>
 
   <div class="cta">
@@ -356,6 +400,8 @@ input[type=number]:disabled{background:#f1f5f9;color:#9aa9ba}
     <small id="ctaNote">料金以外の相談も承ります</small>
   </div>
 </section>
+
+<section id="report" class="print-only" aria-hidden="true"></section>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

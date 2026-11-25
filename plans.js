@@ -154,6 +154,8 @@ const TYPICAL_PRICE = {
   "UQ mobile": { small: 3828, large: 4048 },
   "LINEMO":    { small: 990,  large: 2970 },
   "Y!mobile":  { small: 3278, large: 4378 },
+  // 楽天モバイルは比較対象外。推定のみに使う参考値（〜20GB 2,178円／20GB超 3,278円、公式サイトで要確認）
+  "楽天モバイル": { small: 2178, large: 3278 },
   "その他":    { small: 4000, large: 7000 }
 };
 

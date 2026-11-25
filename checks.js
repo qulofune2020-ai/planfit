@@ -132,7 +132,9 @@
   ];
 
   // answers: { [id]: "none" | "using" | "unused" | "unknown" }
-  function evaluateContract(answers) {
+  // custom : 自由入力の契約 [{ name, fee, status: "using" | "unused" | "unknown" }]
+  //          金額は実額なので、節約額の幅には同じ値（min = max）で加える
+  function evaluateContract(answers, custom = []) {
     const unused = [], unknown = [], using = [];
     for (const item of CONTRACT_ITEMS) {
       const a = answers[item.id];
@@ -140,6 +142,16 @@
       else if (a === "unknown") unknown.push(item);
       else if (a === "using") using.push(item);
     }
+    custom.forEach((c, i) => {
+      const name = String(c.name || "").trim();
+      const fee = Math.max(0, Math.round(Number(c.fee) || 0));
+      if (!name && !fee) return;
+      const item = { id: "custom" + i, name: name || "名称未入力の契約", min: fee, max: fee, custom: true,
+        hint: fee ? "入力された月額です" : "月額は未入力です" };
+      if (c.status === "unused") unused.push(item);
+      else if (c.status === "using") using.push(item);
+      else unknown.push(item);
+    });
     const saveMin = unused.reduce((s, i) => s + i.min, 0);
     const saveMax = unused.reduce((s, i) => s + i.max, 0);
     return { unused, unknown, using, saveMin, saveMax };
@@ -160,7 +172,8 @@
   function bringList(r) {
     const unknown = new Set(r.unknown.map(i => i.id));
     const carrierUnknown = CARRIER_ITEM_IDS.some(id => unknown.has(id));
-    const subsUnknown = SUBS_ITEM_IDS.some(id => unknown.has(id));
+    // 自由入力の契約が「わからない」なら、どこの契約か分からないのでカード明細も強調
+    const subsUnknown = SUBS_ITEM_IDS.some(id => unknown.has(id)) || r.unknown.some(i => i.custom);
     const items = [
       { name: "スマホ本体（充電しておく）", why: "ログインの確認コードがSMSで届きます。サブスクの一覧もスマホで確認できます", level: "must", focus: false },
       { name: "キャリアのマイページのID・パスワード（My docomo／My au／My SoftBank など）", why: "オプション契約の確認・解約に使います", level: "must", focus: carrierUnknown },
