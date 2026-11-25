@@ -21,7 +21,7 @@ test("おすすめは1ブランド1枠", () => {
 test("長電話ならかけ放題オプション代を上乗せする", () => {
   const povo = PLANS.find(p => p.name.includes("povo2.0（30GB"));
   assert.strictEqual(D.monthlyCost(povo, "unlimited").total, povo.price + 1650);
-  const ahamo = PLANS.find(p => p.name === "ahamo（30GB）");
+  const ahamo = PLANS.find(p => p.name === "ahamo（40GB）");
   assert.strictEqual(D.monthlyCost(ahamo, "short").total, ahamo.price); // 5分込み
 });
 
@@ -50,4 +50,12 @@ test("無制限希望なら無制限プランのみ", () => {
 test("共有URLのエンコードとデコードが往復する", () => {
   const input = { carrier: "Y!mobile", currentPrice: null, data: 10, call: "short", prefs: ["store", "family"] };
   assert.deepStrictEqual(D.decodeInput("?" + D.encodeInput(input)), input);
+});
+
+test("プランデータの必須項目がそろっている", () => {
+  for (const p of PLANS) {
+    assert.ok(p.brand && p.name && p.officialUrl && p.checkedAt, p.name);
+    assert.ok(Number.isFinite(p.price) && p.price > 0, p.name);
+    assert.ok(["none", "5min", "10min", "unlimited"].includes(p.callIncluded), p.name);
+  }
 });

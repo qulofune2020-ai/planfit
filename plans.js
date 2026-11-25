@@ -9,121 +9,155 @@
 // family       : 家族割・家族向け割引あり
 // quality      : 大手キャリア回線（全プラン true。将来の拡張用）
 // senior       : シニア向け割引・サポートあり
-// checkedAt    : 公式サイトで料金を確認した日
+// checkedAt    : 料金を確認した日
+// note         : 注意書き（任意）。診断結果の注意点に表示される
+// verified     : false = 公式サイトで直接確認できていない（比較サイト等の二次情報）
 //
 // ⚠️ 料金は改定が多いので、公開前に必ず公式サイトで確認してください。
 const PLANS = [
-  // ── ドコモ ───────────────────────────
+  // ── ドコモ（2026-12-01 料金改定後）──
   {
-    brand: "ドコモ", name: "ドコモ mini（4GB）", price: 2750, data: 4,
+    brand: "ドコモ", name: "ドコモ mini2（6GB）", price: 3278, data: 6,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.docomo.ne.jp/charge/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.docomo.ne.jp/charge/docomo_mini2/", checkedAt: "2026-11-25",
+    note: "2026年12月1日提供開始のプラン"
   },
   {
-    brand: "ドコモ", name: "ドコモ mini（10GB）", price: 3850, data: 10,
+    brand: "ドコモ", name: "ドコモ mini2（12GB）", price: 4598, data: 12,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.docomo.ne.jp/charge/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.docomo.ne.jp/charge/docomo_mini2/", checkedAt: "2026-11-25",
+    note: "2026年12月1日提供開始のプラン"
   },
   {
     brand: "ドコモ", name: "ドコモ MAX（無制限）", price: 8448, data: 999,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.docomo.ne.jp/charge/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.docomo.ne.jp/charge/docomo_max/", checkedAt: "2026-11-25"
   },
-  // ── ahamo ────────────────────────────
+  // ── ahamo（2026-12-01 料金改定後）──
   {
-    brand: "ahamo", name: "ahamo（30GB）", price: 2970, data: 30,
+    brand: "ahamo", name: "ahamo（40GB）", price: 3135, data: 40,
     callIncluded: "5min", callOptions: { short: 0, unlimited: 1100 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://ahamo.com/", checkedAt: "2026-07-22"
+    officialUrl: "https://ahamo.com/plan/", checkedAt: "2026-11-25",
+    note: "2026年12月1日からの新料金"
   },
   {
-    brand: "ahamo", name: "ahamo 大盛り（110GB）", price: 4950, data: 110,
+    brand: "ahamo", name: "ahamo（60GB）", price: 4125, data: 60,
     callIncluded: "5min", callOptions: { short: 0, unlimited: 1100 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://ahamo.com/", checkedAt: "2026-07-22"
+    officialUrl: "https://ahamo.com/plan/", checkedAt: "2026-11-25",
+    note: "2026年12月1日からの新料金"
   },
-  // ── au ───────────────────────────────
   {
-    brand: "au", name: "auの大容量向けプラン（無制限）", price: 8008, data: 999,
+    brand: "ahamo", name: "ahamo（120GB）", price: 5115, data: 120,
+    callIncluded: "5min", callOptions: { short: 0, unlimited: 1100 },
+    store: false, family: false, quality: true, senior: false,
+    officialUrl: "https://ahamo.com/plan/", checkedAt: "2026-11-25",
+    note: "2026年12月1日からの新料金"
+  },
+  // ── au ──
+  {
+    brand: "au", name: "auバリューリンクプラン（無制限）", price: 8008, data: 999,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.au.com/mobile/charge/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.au.com/mobile/charge/smartphone/plan/auvaluelink/", checkedAt: "2026-11-25"
   },
-  // ── povo ─────────────────────────────
+  // ── povo（基本料0円＋データトッピング）──
   {
-    brand: "povo", name: "povo2.0（3GBトッピング）", price: 990, data: 3,
+    brand: "povo", name: "povo2.0（3GB/30日トッピング）", price: 990, data: 3,
     callIncluded: "none", callOptions: { short: 550, unlimited: 1650 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://povo.jp/", checkedAt: "2026-07-22"
+    officialUrl: "https://povo.jp/spec/detail/", checkedAt: "2026-11-25"
   },
   {
-    brand: "povo", name: "povo2.0（30GBトッピング）", price: 2700, data: 30,
+    brand: "povo", name: "povo2.0（30GB/30日トッピング）", price: 2780, data: 30,
     callIncluded: "none", callOptions: { short: 550, unlimited: 1650 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://povo.jp/", checkedAt: "2026-07-22"
+    officialUrl: "https://povo.jp/spec/detail/", checkedAt: "2026-11-25"
   },
-  // ── UQ mobile ────────────────────────
+  // ── UQ mobile ──
   {
-    brand: "UQ mobile", name: "UQ mobile 小容量プラン（4GB）", price: 2365, data: 4,
+    brand: "UQ mobile", name: "UQ mobile トクトクプラン2（30GB）", price: 4048, data: 30,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.uqwimax.jp/mobile/plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.uqwimax.jp/mobile/plan/tokutoku2/", checkedAt: "2026-11-25"
   },
   {
-    brand: "UQ mobile", name: "UQ mobile 中容量プラン（35GB）", price: 3828, data: 35,
+    brand: "UQ mobile", name: "UQ mobile コミコミプランバリュー（35GB）", price: 3828, data: 35,
     callIncluded: "10min", callOptions: { short: 0, unlimited: 1100 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.uqwimax.jp/mobile/plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.uqwimax.jp/mobile/plan/komikomi-pv/", checkedAt: "2026-11-25"
   },
-  // ── SoftBank ─────────────────────────
+  // ── SoftBank ──
   {
-    brand: "SoftBank", name: "SoftBankの大容量向けプラン（無制限）", price: 7425, data: 999,
+    brand: "SoftBank", name: "SoftBank ミニフィット2（5GB）", price: 6358, data: 5,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.softbank.jp/mobile/price_plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.softbank.jp/mobile/price_plan/", checkedAt: "2026-11-25"
   },
-  // ── LINEMO ───────────────────────────
+  {
+    brand: "SoftBank", name: "SoftBank テイガク無制限", price: 8008, data: 999,
+    callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
+    store: true, family: true, quality: true, senior: true,
+    officialUrl: "https://www.softbank.jp/mobile/price_plan/data/teigaku-museigen/", checkedAt: "2026-11-25"
+  },
+  // ── LINEMO（公式サイトに自動アクセスできず、二次情報で確認）──
   {
     brand: "LINEMO", name: "LINEMO ベストプラン（3GB）", price: 990, data: 3,
     callIncluded: "none", callOptions: { short: 550, unlimited: 1650 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25",
+    note: "料金は公式サイトで要確認",
+    verified: false
+  },
+  {
+    brand: "LINEMO", name: "LINEMO ベストプラン（10GB）", price: 2090, data: 10,
+    callIncluded: "none", callOptions: { short: 550, unlimited: 1650 },
+    store: false, family: false, quality: true, senior: false,
+    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25",
+    note: "料金は公式サイトで要確認",
+    verified: false
   },
   {
     brand: "LINEMO", name: "LINEMO ベストプランV（30GB）", price: 2970, data: 30,
     callIncluded: "5min", callOptions: { short: 0, unlimited: 1100 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25",
+    note: "料金は公式サイトで要確認",
+    verified: false
   },
-  // ── Y!mobile ─────────────────────────
+  // ── Y!mobile（公式サイトに自動アクセスできず、二次情報で確認）──
   {
-    brand: "Y!mobile", name: "Y!mobile 小容量プラン（5GB）", price: 3058, data: 5,
+    brand: "Y!mobile", name: "Y!mobile シンプル3 S（5GB）", price: 3278, data: 5,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25",
+    note: "料金は公式サイトで要確認",
+    verified: false
   },
   {
-    brand: "Y!mobile", name: "Y!mobile 中容量プラン（30GB）", price: 4158, data: 30,
+    brand: "Y!mobile", name: "Y!mobile シンプル3 M（30GB）", price: 4378, data: 30,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-07-22"
+    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25",
+    note: "料金は公式サイトで要確認",
+    verified: false
   }
 ];
 
-// 「今の月額がわからない」ときの推定用：ブランドごとの典型的な月額
-// （データ量が多いほど高くなる想定のざっくり値）
+// 「今の月額がわからない」ときの推定用：ブランドごとの典型的な月額（割引前）
 const TYPICAL_PRICE = {
-  "ドコモ":    { small: 3850, large: 8448 },
-  "au":        { small: 4000, large: 8008 },
-  "SoftBank":  { small: 4000, large: 7425 },
-  "ahamo":     { small: 2970, large: 4950 },
-  "povo":      { small: 990,  large: 2700 },
-  "UQ mobile": { small: 2365, large: 3828 },
+  "ドコモ":    { small: 3278, large: 8448 },
+  "au":        { small: 4928, large: 8008 },
+  "SoftBank":  { small: 6358, large: 8008 },
+  "ahamo":     { small: 3135, large: 4125 },
+  "povo":      { small: 990,  large: 2780 },
+  "UQ mobile": { small: 3828, large: 4048 },
   "LINEMO":    { small: 990,  large: 2970 },
-  "Y!mobile":  { small: 3058, large: 4158 },
+  "Y!mobile":  { small: 3278, large: 4378 },
   "その他":    { small: 4000, large: 7000 }
 };
 

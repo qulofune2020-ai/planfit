@@ -59,6 +59,7 @@
     if (input.prefs.includes("store") && !plan.store) c.push("店舗サポートなし（手続きはオンライン）");
     if (input.prefs.includes("family") && !plan.family) c.push("家族割はなし");
     if (input.data >= 999 && plan.data !== 999) c.push("データ無制限ではありません");
+    if (plan.note) c.push(plan.note);
     return c;
   }
 
