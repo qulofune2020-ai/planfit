@@ -239,9 +239,24 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,la
 .staff-actions .next{background:#fff;color:#17365d;border-color:#fff}
 .staff-actions button[aria-pressed=true]{background:#2f80ed;border-color:#2f80ed}
 body.staff .public-only{display:none!important}
-body.staff .tabs{top:58px}
+body.staff .tabs{position:static}
+body.staff .result,body.staff .q,body.staff .card{scroll-margin-top:70px}
+@media(max-width:600px){
+  .staff-bar{padding:8px 10px;gap:6px;flex-wrap:nowrap}
+  .staff-title{font-size:.8rem;line-height:1.3}.staff-title small,.staff-bar .long{display:none}
+  .staff-actions{gap:5px;flex-wrap:nowrap}
+  .staff-actions button,.staff-actions a{padding:7px 8px;font-size:.74rem;white-space:nowrap}
+}
 html.text-lg{font-size:118%}
 @media(max-width:600px){.choose{padding:14px}.choose-body strong{font-size:1.02rem}.stat b{font-size:1.2rem}}
+.staff-only{display:none}
+body.staff .staff-only{display:block}
+body.staff span.staff-only{display:inline}
+.todo{margin:16px 0 0;border:2px solid #cfe1f6;border-radius:16px;padding:16px;background:#f8fbff}
+.todo h3{margin:0 0 8px;font-size:1.05rem}
+.todo ol,.todo ul{margin:0;padding-left:1.3em;line-height:1.8;font-size:.92rem}
+.todo .note{font-size:.8rem;color:var(--muted);margin:8px 0 0}
+.contacts li b{color:var(--navy)}
 @media print{
   @page{size:A4;margin:14mm}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -266,11 +281,11 @@ html.text-lg{font-size:118%}
 <body>
 <a class="skip" href="#main">本文へスキップ</a>
 <div class="staff-bar" id="staffBar" hidden>
-  <div class="staff-title">👥 相談会モード（スタッフ用）<small>入力はこの端末に保存されません</small></div>
+  <div class="staff-title">👥 相談会モード<span class="long">（スタッフ用）</span><small>入力はこの端末に保存されません</small></div>
   <div class="staff-actions">
-    <button type="button" id="bigText" aria-pressed="false">文字を大きく</button>
-    <button type="button" class="next" id="nextPerson">次の方へ（全消去）</button>
-    <a href="./">一般モードへ</a>
+    <button type="button" id="bigText" aria-pressed="false" aria-label="文字を大きく">文字<span class="long">を</span>大きく</button>
+    <button type="button" class="next" id="nextPerson" aria-label="次の方へ（全消去）">次の方へ<span class="long">（全消去）</span></button>
+    <a href="./" aria-label="一般モードへ">一般<span class="long">モードへ</span></a>
   </div>
 </div>
 <main class="container" id="main">
@@ -293,7 +308,7 @@ html.text-lg{font-size:118%}
 
 <div class="panel" id="panel-plan" role="tabpanel" hidden>
 <div id="priceStale"></div>
-<div class="loss-copy">そのまま払い続ける前に。毎月、もっと下げられる可能性があります。</div>
+<div class="loss-copy public-only">そのまま払い続ける前に。毎月、もっと下げられる可能性があります。</div>
 
 <section class="card">
   <div class="step">STEP 1</div>
@@ -410,9 +425,16 @@ html.text-lg{font-size:118%}
 
 <section id="support">
   <div class="card">
-    <div class="step">SMARTPHONE SUPPORT</div>
-    <h2>料金以外のお困りごとも相談できます</h2>
-    <div class="support-intro">実際には、料金見直しよりも「設定」「ログイン」「ID・パスワード整理」の相談が多く寄せられます。</div>
+    <div class="public-only">
+      <div class="step">SMARTPHONE SUPPORT</div>
+      <h2>料金以外のお困りごとも相談できます</h2>
+      <div class="support-intro">実際には、料金見直しよりも「設定」「ログイン」「ID・パスワード整理」の相談が多く寄せられます。</div>
+    </div>
+    <div class="staff-only">
+      <div class="step">TODAY</div>
+      <h2>本日の相談内容</h2>
+      <div class="support-intro">今日ご相談いただいた内容にチェックを入れてください。診断書に記載されます。</div>
+    </div>
     <div class="trouble" id="troubleOptions">
       <label class="option"><input type="checkbox" value="LINEの使い方">LINEの使い方</label>
       <label class="option"><input type="checkbox" value="Wi-Fiにつながらない">Wi-Fiにつながらない</label>
@@ -425,6 +447,7 @@ html.text-lg{font-size:118%}
       <label class="option"><input type="checkbox" value="ログインできない">ログインできない</label>
       <label class="option"><input type="checkbox" value="登録サービスがわからない">登録サービスがわからない</label>
     </div>
+    <div class="staff-only" id="staffTodo"></div>
     <div class="memo" id="memo">
       <pre id="memoText"></pre>
       <button type="button" id="copyMemo">相談メモをコピー</button>
@@ -451,7 +474,8 @@ html.text-lg{font-size:118%}
 <footer>
   本診断は一般的な利用条件に基づく参考情報です。<br>
   <span id="versionInfo"></span><br>
-  © スマホ相談窓口
+  <span class="public-only">© スマホ相談窓口</span>
+  <span class="staff-only">地域の相談会用の参考資料です。特定の事業者との契約をすすめるものではありません。</span>
 </footer>
 </main>
 

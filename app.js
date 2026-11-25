@@ -167,8 +167,8 @@
     const msg = r.alreadyOptimal
       ? "スマホ料金を診断したら、今のプランがすでにお得でした！"
       : `スマホ料金を診断したら、年間 約${yen(r.saving * 12)} 下げられるかも！`;
-    $("lineShare").href = "https://line.me/R/share?text=" + encodeURIComponent(msg + "\n" + url);
-    $("copyLink").onclick = () => copy(url, "結果のURLをコピーしました");
+    if ($("lineShare")) $("lineShare").href = "https://line.me/R/share?text=" + encodeURIComponent(msg + "\n" + url);
+    if ($("copyLink")) $("copyLink").onclick = () => copy(url, "結果のURLをコピーしました");
 
     if (!STAFF) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(input)); } catch (e) { /* 保存できなくても動作に影響なし */ } }
 
@@ -182,14 +182,37 @@
     const memo = $("memo");
     if (!picked.length && !results.length) {
       memo.classList.remove("show");
-      $("ctaNote").textContent = "料金以外の相談も承ります";
+      if ($("ctaNote")) $("ctaNote").textContent = "料金以外の相談も承ります";
+      renderStaffTodo();
       return;
     }
     const lines = ["【スマホ相談メモ】", ...results];
     if (picked.length) lines.push("・相談したいこと：", ...picked.map(x => "　- " + x));
     $("memoText").textContent = lines.join("\n");
     memo.classList.add("show");
-    $("ctaNote").textContent = "診断結果とお困りごとを相談メモにまとめました。窓口でそのまま見せられます";
+    if ($("ctaNote")) $("ctaNote").textContent = "診断結果とお困りごとを相談メモにまとめました。窓口でそのまま見せられます";
+    renderStaffTodo();
+  }
+
+  // ── 相談会モード：ご本人が確認すること・公的相談先 ─────────
+  function todoItems() {
+    return Checks.personTodo({
+      plan: reportState.plan && reportState.plan.r,
+      safety: reportState.safety,
+      contract: reportState.contract
+    });
+  }
+
+  function renderStaffTodo() {
+    if (!STAFF) return;
+    const todo = todoItems();
+    $("staffTodo").innerHTML = `
+      <div class="todo"><h3>✅ ご本人が確認すること</h3>
+        ${todo.length ? `<ol>${todo.map(t => `<li>${esc(t)}</li>`).join("")}</ol>` : `<p class="reason">診断を行うと、ここに確認することが表示されます。</p>`}
+        <p class="note">${esc(Checks.TODO_NOTE)}</p></div>
+      <div class="todo contacts"><h3>📞 必要に応じた公的な相談先</h3><ul>
+        ${Checks.PUBLIC_CONTACTS.map(c => `<li><b>${esc(c.name)}　${esc(c.tel)}</b><br>${esc(c.when)}</li>`).join("")}
+      </ul><p class="note">契約中の通信会社の手続きは、各社の公式サポート窓口で行えます。</p></div>`;
   }
 
   // ── 診断の選択とタブ切り替え ─────────────────
@@ -379,7 +402,14 @@
         `<li><span class="check"></span>${i.focus ? "★ " : ""}${esc(i.name)}</li>`).join("")}</ul></div>`);
     }
     const picked = [...document.querySelectorAll("#troubleOptions input:checked")].map(x => x.value);
-    if (picked.length) parts.push(`<div class="box"><h2>相談したいこと</h2>${li(picked)}</div>`);
+    if (picked.length) parts.push(`<div class="box"><h2>${STAFF ? "本日の相談内容" : "相談したいこと"}</h2>${li(picked)}</div>`);
+    if (STAFF) {
+      const todo = todoItems();
+      if (todo.length) parts.push(`<div class="box"><h2>ご本人が確認すること</h2><ul style="list-style:none;padding-left:0">${todo.map(t =>
+        `<li><span class="check"></span>${esc(t)}</li>`).join("")}</ul><p class="meta">${esc(Checks.TODO_NOTE)}</p></div>`);
+      parts.push(`<div class="box"><h2>必要に応じた公的な相談先</h2><table>${Checks.PUBLIC_CONTACTS.map(c =>
+        `<tr><th>${esc(c.name)}<br>${esc(c.tel)}</th><td>${esc(c.when)}</td></tr>`).join("")}</table></div>`);
+    }
     if (!P && !S && !C && !picked.length) parts.push("<p>まだ診断が行われていません。</p>");
     if (STAFF) parts.push(`<div class="box"><h2>相談員記入欄</h2><table>
       <tr><th>相談日・担当</th><td style="height:26px"></td></tr>
@@ -388,7 +418,9 @@
       <tr><th>次回までにやること</th><td style="height:52px"></td></tr>
       <tr><th>次回の相談</th><td><span class="check"></span>不要　<span class="check"></span>予定あり（　　月　　日）</td></tr></table></div>`);
     parts.push(`<div class="foot">料金は公式サイト確認時点の参考値で、割引・キャンペーン・端末代・通話料等により実際の負担は変わります。安全診断は情報漏えいや不正利用がないことを保証するものではありません。
-      この診断書には氏名・電話番号・パスワードは記載していません。<br>スマホ相談窓口　https://planfit.vercel.app/</div>`);
+      この診断書には氏名・電話番号・パスワードは記載していません。<br>${STAFF
+        ? "地域の相談会で作成した参考資料です。特定の事業者との契約をすすめるものではありません。"
+        : "スマホ相談窓口　https://planfit.vercel.app/"}</div>`);
     $("report").innerHTML = parts.join("");
   }
 
@@ -472,6 +504,9 @@
     $("priceStale").innerHTML = staleHtml();
     if (STAFF) {
       document.body.classList.add("staff");
+      // 販売・契約につながる案内は、CSSで隠すのではなくページから取り除く
+      document.querySelectorAll(".public-only").forEach(el => el.remove());
+      renderStaffTodo();
       $("staffBar").hidden = false;
       $("nextPerson").addEventListener("click", clearAll);
       $("bigText").addEventListener("click", () => {
