@@ -49,3 +49,21 @@ test("データの必須項目", () => {
   for (const q of C.SAFETY_QUESTIONS) assert.ok(q.id && q.q && q.title && q.iphone && q.android && ["yes", "no"].includes(q.bad), q.id);
   for (const i of C.CONTRACT_ITEMS) assert.ok(i.id && i.name && i.min > 0 && i.max >= i.min, i.id);
 });
+
+test("持ち物：キャリアのオプションが「わからない」ならID・暗証番号を強調", () => {
+  const a = Object.fromEntries(C.CONTRACT_ITEMS.map(i => [i.id, "none"]));
+  const r = C.evaluateContract({ ...a, voicemail: "unknown" });
+  const items = C.bringList(r);
+  assert.ok(items.find(i => i.name.includes("マイページ")).focus);
+  assert.ok(items.find(i => i.name.includes("暗証番号")).focus);
+  assert.ok(!items.find(i => i.name.includes("クレジットカード")).focus);
+  assert.ok(!items.some(i => i.level === "ifNeeded"));
+});
+
+test("持ち物：サブスクが「わからない」ならカード明細を強調、解約候補があれば本人確認書類", () => {
+  const a = Object.fromEntries(C.CONTRACT_ITEMS.map(i => [i.id, "none"]));
+  const r = C.evaluateContract({ ...a, music: "unknown", catch: "unused" });
+  const items = C.bringList(r);
+  assert.ok(items.find(i => i.name.includes("クレジットカード")).focus);
+  assert.ok(items.some(i => i.level === "ifNeeded" && i.name.includes("本人確認")));
+});

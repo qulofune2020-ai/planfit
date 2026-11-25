@@ -237,6 +237,42 @@
         ${segRadio("c_" + item.id, [["none", "入っていない"], ["using", "使っている"], ["unused", "使っていない"], ["unknown", "わからない"]], true)}</div>`).join("");
   }
 
+  const BRING_GROUPS = [["must", "必ず持ってくるもの"], ["recommend", "あれば持ってくるもの"], ["ifNeeded", "その場で手続きまで進める場合"]];
+
+  function renderBringList(r) {
+    const items = Checks.bringList(r);
+    const focusCount = items.filter(i => i.focus).length;
+    const lead = r.unknown.length >= 3
+      ? `「わからない」が ${r.unknown.length} 項目ありました。相談会で一緒に確認するのがおすすめです。<strong>★の付いた持ち物</strong>があると、その場で確認できます。`
+      : focusCount
+        ? `<strong>★の付いた持ち物</strong>があると、「わからない」だった項目をその場で確認できます。`
+        : "相談会では、次のものがあるとスムーズに確認・手続きできます。";
+    const groups = BRING_GROUPS.map(([level, label]) => {
+      const list = items.filter(i => i.level === level);
+      if (!list.length) return "";
+      return `<h4 class="bring-group">${label}</h4><ul class="bring">${list.map(i =>
+        `<li class="${i.focus ? "focus" : ""}"><b>${i.focus ? "★ " : ""}${esc(i.name)}</b><small>${esc(i.why)}</small></li>`).join("")}</ul>`;
+    }).join("");
+    return `<div class="bring-box">
+      <h3>🎒 相談会に持ってくるもの</h3>
+      <p class="reason">${lead}</p>
+      ${groups}
+      <div class="bring-notes">${Checks.BRING_NOTES.map(n => `<p>🔒 ${esc(n)}</p>`).join("")}</div>
+      <button type="button" class="ghost" id="copyBring">持ち物リストをコピー（LINE・メモ用）</button>
+    </div>`;
+  }
+
+  function bringText(r) {
+    const items = Checks.bringList(r);
+    const lines = ["【スマホ相談会の持ち物】"];
+    BRING_GROUPS.forEach(([level, label]) => {
+      const list = items.filter(i => i.level === level);
+      if (list.length) lines.push("■" + label, ...list.map(i => "・" + (i.focus ? "★" : "") + i.name));
+    });
+    lines.push("", ...Checks.BRING_NOTES.map(n => "※" + n));
+    return lines.join("\n");
+  }
+
   function runContract() {
     const { answers, missing } = collect($("contractItems"), "c_", Checks.CONTRACT_ITEMS.map(i => i.id));
     if (missing.length) {
@@ -260,7 +296,9 @@
       ${r.unused.length ? `<h3 class="section-title">解約・見直し候補（${r.unused.length}件）</h3>${unused}<div class="how"><b>解約の方法：</b>キャリアのオプションは会員ページ・アプリ・店舗で、サブスクは契約したアプリやサイトの設定から手続きできます。${r.unknown.length ? "" : "<br>" + Checks.CONTRACT_HOWTO.slice(0, 3).map(esc).join("<br>")}</div>` : ""}
       ${unknown}
       ${r.using.length ? `<h3 class="section-title">使っている契約（そのままでOK）</h3><ul class="ok-list">${r.using.map(i => `<li>${esc(i.name)}</li>`).join("")}</ul>` : ""}
+      ${renderBringList(r)}
       <p class="notice">金額は一般的な目安です。実際の料金は契約内容によって異なります。解約すると特典や割引がなくなる場合があるので、手続き前に条件を確認してください。</p>`;
+    $("copyBring").addEventListener("click", () => copy(bringText(r), "持ち物リストをコピーしました"));
     $("contractResult").classList.add("show");
     $("contractResult").scrollIntoView({ behavior: "smooth" });
     memoState.contract = ["・契約診断：見直し候補 " + r.unused.length + "件" + (r.unused.length ? "（月 " + range(r.saveMin, r.saveMax) + "）" : ""),
