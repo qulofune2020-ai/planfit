@@ -86,7 +86,7 @@
     "困ったら：消費者ホットライン「188」、警察相談専用電話「#9110」"
   ];
 
-  // answers: { [id]: "yes" | "no" | "unknown" }
+  // answers: { [id]: "yes" | "no" | "unknown" }（"unknown" は画面上「未確認」）
   function scoreSafety(answers) {
     let total = 0, lost = 0;
     const actions = [], checks = [];
@@ -105,8 +105,11 @@
     }
     actions.sort((a, b) => b.weight - a.weight);
     const score = Math.round(100 * (1 - lost / total));
-    const rank = urgent ? "至急対応" : score >= 80 ? "安心" : score >= 50 ? "注意" : "要対策";
-    return { score, rank, urgent, actions, checks, answered: Object.keys(answers).length };
+    // 未確認が残っている間は「安心」と判定しない（未確認＝安全ではない）
+    let rank = urgent ? "至急対応" : score >= 80 ? "安心" : score >= 50 ? "注意" : "要対策";
+    if (rank === "安心" && checks.length) rank = "未確認あり";
+    const okCount = SAFETY_QUESTIONS.length - actions.length - checks.length;
+    return { score, rank, urgent, actions, checks, okCount, answered: Object.keys(answers).length };
   }
 
   // ── ③ 契約診断 ─────────────────────────────

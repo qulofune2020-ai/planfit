@@ -13,6 +13,7 @@
   --shadow:0 14px 36px rgba(33,76,120,.10);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 body{
   margin:0;
@@ -209,6 +210,38 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,la
 .ghost.danger{border-color:#e7b7b2;color:#a1352f}
 .print-only{display:none}
 @media(max-width:600px){.custom-row{grid-template-columns:1fr 90px 40px}.custom-row select{grid-column:1/-1;grid-row:2}}
+.hero{padding:22px 4px 10px}
+.hero h1{font-size:clamp(1.8rem,6vw,2.8rem);margin:6px 0 8px}
+.chooser{display:flex;flex-direction:column;gap:10px;max-width:620px;margin:18px auto 0}
+.choose{display:flex;align-items:center;gap:14px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:18px;padding:16px 18px;cursor:pointer;box-shadow:var(--shadow);color:var(--navy);transition:.15s}
+.choose:hover{border-color:var(--blue);transform:translateY(-1px)}
+.choose-no{font-size:1.6rem;font-weight:900;color:var(--blue);flex:none}
+.choose-body{flex:1;display:flex;flex-direction:column;gap:3px}
+.choose-body strong{font-size:1.15rem}
+.choose-body small{color:var(--muted);font-size:.84rem;line-height:1.5}
+.choose-meta{flex:none;background:var(--blue2);color:var(--blue);font-weight:800;font-size:.78rem;border-radius:999px;padding:5px 10px}
+.choose[aria-current=true]{border:2px solid var(--blue);background:#f4f9ff}
+.trust-line{font-size:.8rem;color:var(--muted);margin-top:14px!important}
+.conditions{margin-top:16px;background:#f8fbff;border:1px solid var(--line);border-radius:14px;padding:14px;font-size:.84rem;line-height:1.7;color:var(--text)}
+.conditions h3{margin:0 0 6px;font-size:.95rem}
+.conditions ul{margin:0;padding-left:1.2em}
+.stale{background:#fff4e5;border:1px solid #f3c58f;color:#7a4410;border-radius:14px;padding:12px 14px;font-weight:700;font-size:.88rem;margin:10px 0}
+.checked-at{font-size:.75rem;color:var(--muted);margin-top:6px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{border-radius:12px;padding:10px;text-align:center;font-size:.8rem;font-weight:700}
+.stat b{display:block;font-size:1.4rem}
+.stat.ok{background:#e8f7ef;color:var(--green)}.stat.ng{background:#fff1f0;color:#b4231d}.stat.un{background:#fff4e5;color:#9a5a12}
+.print-btn{margin-top:12px}
+.staff-bar{position:sticky;top:0;z-index:30;background:#17365d;color:#fff;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.staff-title{font-weight:900}.staff-title small{display:block;font-weight:500;font-size:.75rem;color:#c9dbef}
+.staff-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.staff-actions button,.staff-actions a{border:1px solid #8fb2d9;background:transparent;color:#fff;border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer;text-decoration:none;font-size:.85rem}
+.staff-actions .next{background:#fff;color:#17365d;border-color:#fff}
+.staff-actions button[aria-pressed=true]{background:#2f80ed;border-color:#2f80ed}
+body.staff .public-only{display:none!important}
+body.staff .tabs{top:58px}
+html.text-lg{font-size:118%}
+@media(max-width:600px){.choose{padding:14px}.choose-body strong{font-size:1.02rem}.stat b{font-size:1.2rem}}
 @media print{
   @page{size:A4;margin:14mm}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -224,32 +257,42 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,la
   #report ul{margin:4px 0;padding-left:1.3em;font-size:9.5pt}
   #report .meta{font-size:9pt;color:#555;margin:0}
   #report .box{page-break-inside:avoid}
-  #report .foot{margin-top:16px;border-top:1px solid #ccc;padding-top:6px;font-size:8.5pt;color:#555}
+  html.text-lg{font-size:100%}
+  #report .foot{overflow-wrap:anywhere;margin-top:16px;border-top:1px solid #ccc;padding-top:6px;font-size:8.5pt;color:#555}
   #report .check{display:inline-block;width:11px;height:11px;border:1px solid #333;margin-right:5px;vertical-align:-1px}
 }
 </style>
 </head>
 <body>
 <a class="skip" href="#main">本文へスキップ</a>
+<div class="staff-bar" id="staffBar" hidden>
+  <div class="staff-title">👥 相談会モード（スタッフ用）<small>入力はこの端末に保存されません</small></div>
+  <div class="staff-actions">
+    <button type="button" id="bigText" aria-pressed="false">文字を大きく</button>
+    <button type="button" class="next" id="nextPerson">次の方へ（全消去）</button>
+    <a href="./">一般モードへ</a>
+  </div>
+</div>
 <main class="container" id="main">
 <section class="hero">
-  <span class="badge">3つの診断・各1分・無料</span>
   <h1>あなたのスマホ<br>まるごと診断</h1>
-  <p>料金・安全・契約の3つをチェックして、ムダと危ないところを見つけます。</p>
-  <div class="trust-row">
-    <div class="trust-item">大手キャリア系のみ比較</div>
-    <div class="trust-item">iPhone／Android対応</div>
-    <div class="trust-item">登録不要で利用可能</div>
+  <p>気になる診断を選んでください。どれも約1分・無料・登録不要です。</p>
+  <div class="chooser" id="chooser">
+    <button type="button" class="choose" data-tab="plan"><span class="choose-no">①</span><span class="choose-body"><strong>料金プラン診断</strong><small>今より安いプランは？ 乗り換えなしで下がる？</small></span><span class="choose-meta">約30秒</span></button>
+    <button type="button" class="choose" data-tab="safety"><span class="choose-no">②</span><span class="choose-body"><strong>スマホ安全診断</strong><small>不審なアプリ・権限・詐欺対策・OS更新</small></span><span class="choose-meta">12問</span></button>
+    <button type="button" class="choose" data-tab="contract"><span class="choose-no">③</span><span class="choose-body"><strong>スマホ契約診断</strong><small>有料オプション・サブスク・不要な契約</small></span><span class="choose-meta">10項目</span></button>
   </div>
+  <p class="trust-line">大手キャリア系のみ比較 ・ iPhone／Android対応 ・ 個人情報の入力なし</p>
 </section>
 
-<nav class="tabs" role="tablist" aria-label="診断の種類">
+<nav class="tabs" id="tabs" role="tablist" aria-label="診断の種類" hidden>
   <button class="tab" role="tab" data-tab="plan" aria-selected="true"><span class="tab-no">①</span><strong>料金プラン診断</strong><small>今より安いプランは？</small></button>
   <button class="tab" role="tab" data-tab="safety" aria-selected="false"><span class="tab-no">②</span><strong>スマホ安全診断</strong><small>アプリ・権限・詐欺・OS更新</small></button>
   <button class="tab" role="tab" data-tab="contract" aria-selected="false"><span class="tab-no">③</span><strong>スマホ契約診断</strong><small>オプション・サブスク・不要契約</small></button>
 </nav>
 
-<div class="panel" id="panel-plan" role="tabpanel">
+<div class="panel" id="panel-plan" role="tabpanel" hidden>
+<div id="priceStale"></div>
 <div class="loss-copy">そのまま払い続ける前に。毎月、もっと下げられる可能性があります。</div>
 
 <section class="card">
@@ -324,12 +367,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,la
 
     <div id="plans"></div>
     <div id="cheapestNote"></div>
+    <div class="conditions" id="priceConditions"></div>
 
-    <div class="share">
+    <div class="share public-only">
       <button type="button" id="copyLink">結果のURLをコピー</button>
       <a class="line" id="lineShare" target="_blank" rel="noopener">LINEで送る</a>
       <button type="button" id="retry">条件を変えて再診断</button>
     </div>
+    <button type="button" class="ghost print-btn">📄 この結果を診断書として印刷</button>
     <p class="notice">表示料金は診断用の概算です。割引、通話料、端末代、キャンペーン、利用条件により実際の料金は異なります。契約前に各社公式サイトまたは店舗で必ず確認してください。</p>
   </div>
 </section>
@@ -339,7 +384,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,la
 <section class="card">
   <div class="step">SAFETY CHECK</div>
   <h2>スマホの安全度をチェック</h2>
-  <p class="lead">12の質問に答えると、危ないところと直し方がわかります。わからない質問は「わからない」でOKです。</p>
+  <p class="lead">12の質問に答えると、危ないところと直し方がわかります。確認できない質問は「未確認」を選んでください（未確認は「安全」とは判定しません）。</p>
   <div id="safetyQuestions" class="qlist"></div>
   <button class="btn" id="safetyBtn" type="button">安全診断の結果を見る</button>
 </section>
@@ -391,7 +436,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,la
     </div>
   </div>
 
-  <div class="cta">
+  <div class="cta public-only">
     <h2>一人で決めるのが不安な方へ</h2>
     <p>料金見直し、契約手続き、初期設定、データ移行、ID・パスワード整理まで、スマホ相談窓口で一緒に確認します。</p>
     <a href="https://skyseben-mobile-oomiya.com/" target="_blank" rel="noopener">スマホ相談窓口を確認する</a>

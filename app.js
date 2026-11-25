@@ -4,6 +4,9 @@
   const yen = n => Math.round(n).toLocaleString() + "円";
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const STORAGE_KEY = "planfit:lastInput";
+  // 相談会モード（スタッフ用）：?mode=staff で有効。入力を端末に保存せず、URLにも残さない
+  const STAFF = new URLSearchParams(location.search).get("mode") === "staff";
+  const BASE_QUERY = STAFF ? "?mode=staff" : "";
   // 相談メモ用：各診断の最新結果（1行ずつ）
   const memoState = { plan: null, safety: null, contract: null };
   // 診断書用：各診断の最新結果
@@ -96,6 +99,7 @@
         <ul class="reason-list">${s.reasons.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
         ${cautions}
         <div class="tags">${tags}</div>
+        <div class="checked-at">料金確認日：${esc(p.checkedAt)}（公式サイト）</div>
         <a class="official" href="${esc(p.officialUrl)}" target="_blank" rel="noopener">公式サイトで最新料金を確認 →</a>
       </div>`;
     }).join("");
@@ -104,6 +108,30 @@
     const inRanked = r.ranked.some(s => s.plan === c.plan);
     $("cheapestNote").innerHTML = inRanked ? "" :
       `<div class="cheapest-note">💡 重視ポイントを外して<strong>料金だけ</strong>で選ぶと、${esc(c.plan.brand)}「${esc(c.plan.name)}」（約${yen(c.total)}/月）が最安です。</div>`;
+  }
+
+  function priceInfo() {
+    const checked = typeof APP_VERSION !== "undefined" ? APP_VERSION.priceCheckedAt : "";
+    const age = PlanFit.priceAgeDays(checked);
+    return { checked, age, stale: age != null && age > PlanFit.PRICE_STALE_DAYS };
+  }
+
+  function staleHtml() {
+    const info = priceInfo();
+    return info.stale
+      ? `<div class="stale">⚠️ 料金情報の確認日（${esc(info.checked)}）から ${info.age} 日たっています。料金が変わっている可能性があるので、必ず公式サイトで最新の料金を確認してください。</div>`
+      : "";
+  }
+
+  function renderConditions(r) {
+    const info = priceInfo();
+    $("priceConditions").innerHTML = `<h3>📋 この料金の前提</h3><ul>
+      <li>料金確認日：<b>${esc(info.checked)}</b>（各社の公式サイトで確認）</li>
+      <li>税込・<b>割引前</b>の月額基本料です（家族割・光回線セット割・カード払い割引・キャンペーンは含みません）</li>
+      <li>${r.need === "none" ? "通話オプションは含めずに計算しています（通話は従量制）" : "通話は「" + (r.need === "short" ? "短時間かけ放題" : "完全かけ放題") + "」の料金を足して計算しています"}</li>
+      <li>端末代の分割払い、通話料（従量）、ユニバーサルサービス料、手数料は含みません</li>
+      ${r.currentEstimated ? "<li>今の月額は、ブランドと使い方からの<b>推定</b>です</li>" : ""}
+    </ul>${staleHtml()}`;
   }
 
   function renderBars(r) {
@@ -132,16 +160,17 @@
     renderSummary(r);
     renderBars(r);
     renderPlans(r);
+    renderConditions(r);
 
     const url = shareUrl(input);
-    history.replaceState(null, "", "?" + PlanFit.encodeInput(input));
+    if (!STAFF) history.replaceState(null, "", "?" + PlanFit.encodeInput(input) + location.hash);
     const msg = r.alreadyOptimal
       ? "スマホ料金を診断したら、今のプランがすでにお得でした！"
       : `スマホ料金を診断したら、年間 約${yen(r.saving * 12)} 下げられるかも！`;
     $("lineShare").href = "https://line.me/R/share?text=" + encodeURIComponent(msg + "\n" + url);
     $("copyLink").onclick = () => copy(url, "結果のURLをコピーしました");
 
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(input)); } catch (e) { /* 保存できなくても動作に影響なし */ }
+    if (!STAFF) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(input)); } catch (e) { /* 保存できなくても動作に影響なし */ } }
 
     $("result").classList.add("show");
     if (scroll) $("result").scrollIntoView({ behavior: "smooth" });
@@ -163,13 +192,20 @@
     $("ctaNote").textContent = "診断結果とお困りごとを相談メモにまとめました。窓口でそのまま見せられます";
   }
 
-  // ── タブ切り替え ─────────────────────────
+  // ── 診断の選択とタブ切り替え ─────────────────
+  // name が null のときは「診断を選ぶ」最初の画面（どのパネルも開かない）
   const TABS = ["plan", "safety", "contract"];
-  function showTab(name, { updateHash = true } = {}) {
-    if (!TABS.includes(name)) name = "plan";
-    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === name)));
-    TABS.forEach(n => { $("panel-" + n).hidden = n !== name; });
-    if (updateHash) history.replaceState(null, "", (name === "plan" ? location.search : location.pathname) + "#" + name);
+  function showTab(name, { updateHash = true, scroll = false } = {}) {
+    const chosen = TABS.includes(name) ? name : null;
+    $("tabs").hidden = !chosen;
+    document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === chosen)));
+    document.querySelectorAll(".choose").forEach(c => c.setAttribute("aria-current", String(c.dataset.tab === chosen)));
+    TABS.forEach(n => { $("panel-" + n).hidden = n !== chosen; });
+    if (updateHash) {
+      const q = chosen === "plan" && !STAFF ? location.search : BASE_QUERY;
+      history.replaceState(null, "", (q || location.pathname) + (chosen ? "#" + chosen : ""));
+    }
+    if (scroll && chosen) $("tabs").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // ── ② 安全診断 ─────────────────────────
@@ -181,7 +217,7 @@
   function renderSafetyQuestions() {
     $("safetyQuestions").innerHTML = Checks.SAFETY_QUESTIONS.map((q, i) =>
       `<div class="q" data-id="${q.id}"><div class="q-title">Q${i + 1}. ${esc(q.q)}</div>
-        ${segRadio("s_" + q.id, [["yes", "はい"], ["no", "いいえ"], ["unknown", "わからない"]])}</div>`).join("");
+        ${segRadio("s_" + q.id, [["yes", "はい"], ["no", "いいえ"], ["unknown", "未確認"]])}</div>`).join("");
   }
 
   function collect(container, prefix, ids) {
@@ -209,28 +245,35 @@
     }
     const r = Checks.scoreSafety(answers);
     reportState.safety = r;
-    const color = r.urgent || r.score < 50 ? "#e5484d" : r.score < 80 ? "var(--orange)" : "var(--green)";
+    const color = r.urgent || r.score < 50 ? "#e5484d" : r.rank === "安心" ? "var(--green)" : "var(--orange)";
     const msg = {
       "至急対応": "被害につながるおそれがあります。下の対応を今すぐ行ってください。",
       "要対策": "危ないところがいくつかあります。上から順に直していきましょう。",
       "注意": "おおむね大丈夫ですが、直しておきたいところがあります。",
-      "安心": "しっかり対策できています！この状態をキープしましょう。"
+      "未確認あり": `対策できている項目は多いですが、未確認が ${r.checks.length} 件あります。確認できるまで「安心」とは判定しません。`,
+      "安心": "確認したすべての項目で対策できています！この状態をキープしましょう。"
     }[r.rank];
+    const stats = `<div class="stat-row">
+      <div class="stat ok"><b>${r.okCount}</b>対策済み</div>
+      <div class="stat ng"><b>${r.actions.length}</b>要対策</div>
+      <div class="stat un"><b>${r.checks.length}</b>未確認</div></div>`;
     const urgent = r.urgent ? `<div class="urgent"><h3>⚠️ 至急やってほしいこと</h3><ol>${Checks.URGENT_STEPS.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : "";
     const actions = r.actions.map((q, i) => `<div class="action"><h3>${i + 1}. ${esc(q.title)}</h3>${howBlock(q)}</div>`).join("");
     const checks = r.checks.map(q => `<div class="action"><h3>確認：${esc(q.title)}</h3>${howBlock(q)}</div>`).join("");
     $("safetyResult").innerHTML = `<div class="step">RESULT</div><h2>安全診断の結果</h2>
       <div class="score-wrap"><div class="score-ring" style="--p:${r.score};--c:${color}"><span>${r.score}</span></div>
         <div><div class="rank-label" style="color:${color}">${r.rank}</div><p class="reason">${msg}</p></div></div>
+      ${stats}
       ${urgent}
       ${r.actions.length ? `<h3 class="section-title">やっておきたい対策（${r.actions.length}件）</h3>${actions}` : ""}
-      ${r.checks.length ? `<h3 class="section-title">「わからない」だった項目の確認方法</h3>${checks}` : ""}
+      ${r.checks.length ? `<h3 class="section-title">未確認の項目（${r.checks.length}件）：確認のしかた</h3><p class="reason">未確認は「安全」という意味ではありません。下の方法で確認するか、相談会で一緒に確認しましょう。</p>${checks}` : ""}
       ${!r.actions.length && !r.checks.length ? `<p class="reason">対策が必要な項目はありませんでした 🎉</p>` : ""}
-      <p class="notice">メニューの名前や場所は、機種やOSのバージョンによって異なることがあります。設定が難しい場合は、下のスマホ相談窓口で一緒に確認できます。</p>`;
+      <p class="notice">メニューの名前や場所は、機種やOSのバージョンによって異なることがあります。この診断は情報漏えいや不正利用がないことを保証するものではありません。</p>
+      <button type="button" class="ghost print-btn">📄 この結果を診断書として印刷</button>`;
     $("safetyResult").classList.add("show");
     $("safetyResult").scrollIntoView({ behavior: "smooth" });
     memoState.safety = ["・安全診断：" + r.score + "点（" + r.rank + "）",
-      ...r.actions.map(q => "　- 要対策：" + q.title), ...r.checks.map(q => "　- 要確認：" + q.title)];
+      ...r.actions.map(q => "　- 要対策：" + q.title), ...r.checks.map(q => "　- 未確認：" + q.title)];
     updateMemo();
   }
 
@@ -304,7 +347,7 @@
   function buildReport() {
     const today = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
     const li = arr => arr.length ? `<ul>${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p class='meta'>なし</p>";
-    const parts = [`<h1>スマホ診断書</h1><p class="meta">作成日：${today}　／　本人と相談員で内容を確認してください</p>`];
+    const parts = [`<h1>${STAFF ? "スマホ相談会 診断書" : "スマホ診断書"}</h1><p class="meta">作成日：${today}　／　本人と相談員で内容を確認してください</p>`];
     const P = reportState.plan;
     if (P) {
       const b = P.r.best;
@@ -313,14 +356,16 @@
         <tr><th>おすすめ</th><td>${esc(b.plan.brand)}「${esc(b.plan.name)}」約${yen(b.total)}/月</td></tr>
         <tr><th>見直し効果</th><td>${P.r.alreadyOptimal ? "今のプランがすでにお得" : `月 約${yen(P.r.saving)}／年 約${yen(P.r.saving * 12)}`}</td></tr>
         <tr><th>ほかの候補</th><td>${P.r.ranked.slice(1).map(x => esc(x.plan.brand + "「" + x.plan.name + "」約" + yen(x.total) + "/月")).join("<br>") || "なし"}</td></tr>
+        <tr><th>料金の前提</th><td>料金確認日 ${esc(priceInfo().checked)}／税込・割引前の月額基本料＋必要な通話オプション。割引・キャンペーン・端末代は含みません</td></tr>
       </table></div>`);
     }
     const S = reportState.safety;
     if (S) {
       parts.push(`<div class="box"><h2>② スマホ安全診断　${S.score}点（${esc(S.rank)}）</h2>
+        <p class="meta">対策済み ${S.okCount}件／要対策 ${S.actions.length}件／未確認 ${S.checks.length}件（未確認は安全という意味ではありません）</p>
         ${S.urgent ? `<p><b>至急：</b>${Checks.URGENT_STEPS.map(esc).join("／")}</p>` : ""}
         <table><tr><th>要対策</th><td>${li(S.actions.map(q => q.title))}</td></tr>
-        <tr><th>要確認（わからない）</th><td>${li(S.checks.map(q => q.title))}</td></tr></table></div>`);
+        <tr><th>未確認</th><td>${li(S.checks.map(q => q.title))}</td></tr></table></div>`);
     }
     const C = reportState.contract;
     if (C) {
@@ -336,6 +381,12 @@
     const picked = [...document.querySelectorAll("#troubleOptions input:checked")].map(x => x.value);
     if (picked.length) parts.push(`<div class="box"><h2>相談したいこと</h2>${li(picked)}</div>`);
     if (!P && !S && !C && !picked.length) parts.push("<p>まだ診断が行われていません。</p>");
+    if (STAFF) parts.push(`<div class="box"><h2>相談員記入欄</h2><table>
+      <tr><th>相談日・担当</th><td style="height:26px"></td></tr>
+      <tr><th>同席</th><td><span class="check"></span>本人のみ　<span class="check"></span>家族　<span class="check"></span>支援者・ケアマネジャー等</td></tr>
+      <tr><th>その場で対応したこと</th><td style="height:52px"></td></tr>
+      <tr><th>次回までにやること</th><td style="height:52px"></td></tr>
+      <tr><th>次回の相談</th><td><span class="check"></span>不要　<span class="check"></span>予定あり（　　月　　日）</td></tr></table></div>`);
     parts.push(`<div class="foot">料金は公式サイト確認時点の参考値で、割引・キャンペーン・端末代・通話料等により実際の負担は変わります。安全診断は情報漏えいや不正利用がないことを保証するものではありません。
       この診断書には氏名・電話番号・パスワードは記載していません。<br>スマホ相談窓口　https://planfit.vercel.app/</div>`);
     $("report").innerHTML = parts.join("");
@@ -352,7 +403,8 @@
 
   // ── 全入力を消去（共有端末向け） ─────────────
   function clearAll() {
-    if (!window.confirm("すべての入力と診断結果を消去しますか？\n元に戻すことはできません。")) return;
+    const msg = STAFF ? "次の方のために、すべての入力と診断結果を消去しますか？" : "すべての入力と診断結果を消去しますか？\n元に戻すことはできません。";
+    if (!window.confirm(msg)) return;
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* 無視 */ }
     document.querySelectorAll("main input[type=radio], main input[type=checkbox]").forEach(x => { x.checked = false; });
     document.querySelector('input[name=carrier][value="ドコモ"]').checked = true;
@@ -364,11 +416,11 @@
     addCustomRow();
     document.querySelectorAll(".q.missing").forEach(x => x.classList.remove("missing"));
     ["result", "safetyResult", "contractResult"].forEach(id => $(id).classList.remove("show"));
-    ["safetyResult", "contractResult", "plans", "summary", "cheapestNote", "report"].forEach(id => { $(id).innerHTML = ""; });
+    ["safetyResult", "contractResult", "plans", "summary", "cheapestNote", "priceConditions", "report"].forEach(id => { $(id).innerHTML = ""; });
     Object.keys(memoState).forEach(k => { memoState[k] = null; reportState[k] = null; });
     updateMemo();
-    history.replaceState(null, "", location.pathname);
-    showTab("plan", { updateHash: false });
+    history.replaceState(null, "", BASE_QUERY || location.pathname);
+    showTab(null, { updateHash: false });
     window.scrollTo({ top: 0, behavior: "smooth" });
     toast("すべての入力を消去しました");
   }
@@ -398,7 +450,8 @@
       ${unknown}
       ${r.using.length ? `<h3 class="section-title">使っている契約（そのままでOK）</h3><ul class="ok-list">${r.using.map(i => `<li>${esc(i.name)}</li>`).join("")}</ul>` : ""}
       ${renderBringList(r)}
-      <p class="notice">金額は一般的な目安です。実際の料金は契約内容によって異なります。解約すると特典や割引がなくなる場合があるので、手続き前に条件を確認してください。</p>`;
+      <p class="notice">金額は一般的な目安です。実際の料金は契約内容によって異なります。解約すると特典や割引がなくなる場合があるので、手続き前に条件を確認してください。</p>
+      <button type="button" class="ghost print-btn">📄 この結果を診断書として印刷</button>`;
     $("copyBring").addEventListener("click", () => copy(bringText(r), "持ち物リストをコピーしました"));
     $("contractResult").classList.add("show");
     $("contractResult").scrollIntoView({ behavior: "smooth" });
@@ -414,6 +467,19 @@
     $("troubleOptions").addEventListener("change", updateMemo);
     $("copyMemo").addEventListener("click", () => copy($("memoText").textContent, "相談メモをコピーしました"));
     document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+    document.querySelectorAll(".choose").forEach(c => c.addEventListener("click", () => showTab(c.dataset.tab, { scroll: true })));
+    document.addEventListener("click", e => { if (e.target.closest(".print-btn")) printReport(); });
+    $("priceStale").innerHTML = staleHtml();
+    if (STAFF) {
+      document.body.classList.add("staff");
+      $("staffBar").hidden = false;
+      $("nextPerson").addEventListener("click", clearAll);
+      $("bigText").addEventListener("click", () => {
+        const on = document.documentElement.classList.toggle("text-lg");
+        $("bigText").setAttribute("aria-pressed", String(on));
+      });
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* 無視 */ }
+    }
     renderSafetyQuestions();
     addCustomRow();
     $("addCustom").addEventListener("click", () => addCustomRow().querySelector(".c-name").focus());
@@ -425,12 +491,12 @@
     $("contractBtn").addEventListener("click", runContract);
 
     // 共有URLから開いたら、その条件で結果を表示。なければ前回の入力を復元
-    const fromUrl = PlanFit.decodeInput(location.search);
+    const fromUrl = STAFF ? null : PlanFit.decodeInput(location.search);
     showTab(fromUrl ? "plan" : location.hash.slice(1), { updateHash: false });
     if (fromUrl) {
       writeInput(fromUrl);
       run(fromUrl, { scroll: true });
-    } else {
+    } else if (!STAFF) {
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
         if (saved) writeInput(saved);
