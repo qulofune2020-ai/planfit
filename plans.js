@@ -129,22 +129,24 @@ const PLANS = [
     note: "料金は公式サイトで要確認",
     verified: false
   },
-  // ── Y!mobile（公式サイトに自動アクセスできず、二次情報で確認）──
+  // ── Y!mobile（基本料金は公式サイトで確認済み）──
   {
     brand: "Y!mobile", name: "Y!mobile シンプル3 S（5GB）", price: 3278, data: 5,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25",
-    note: "料金は公式サイトで要確認",
-    verified: false
+    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25"
   },
   {
     brand: "Y!mobile", name: "Y!mobile シンプル3 M（30GB）", price: 4378, data: 30,
     callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
     store: true, family: true, quality: true, senior: true,
-    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25",
-    note: "料金は公式サイトで要確認",
-    verified: false
+    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25"
+  },
+  {
+    brand: "Y!mobile", name: "Y!mobile シンプル3 L（35GB）", price: 5478, data: 35,
+    callIncluded: "none", callOptions: { short: 880, unlimited: 1980 },
+    store: true, family: true, quality: true, senior: true,
+    officialUrl: "https://www.ymobile.jp/plan/", checkedAt: "2026-11-25"
   }
 ];
 
