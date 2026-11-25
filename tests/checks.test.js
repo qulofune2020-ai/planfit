@@ -67,3 +67,18 @@ test("持ち物：サブスクが「わからない」ならカード明細を�
   assert.ok(items.find(i => i.name.includes("クレジットカード")).focus);
   assert.ok(items.some(i => i.level === "ifNeeded" && i.name.includes("本人確認")));
 });
+
+test("契約診断：自由入力の契約は実額で節約額に加える", () => {
+  const a = Object.fromEntries(C.CONTRACT_ITEMS.map(i => [i.id, "none"]));
+  const r = C.evaluateContract({ ...a, catch: "unused" }, [
+    { name: "動画サービスA", fee: 1490, status: "unused" },
+    { name: "ゲーム課金", fee: "500", status: "using" },
+    { name: "", fee: "", status: "unknown" },          // 空行は無視
+    { name: "よくわからない引き落とし", fee: 0, status: "unknown" }
+  ]);
+  assert.strictEqual(r.saveMin, 220 + 1490);
+  assert.strictEqual(r.saveMax, 220 + 1490);
+  assert.strictEqual(r.using.length, 1);
+  assert.strictEqual(r.unknown.length, 1);
+  assert.ok(C.bringList(r).find(i => i.name.includes("クレジットカード")).focus);
+});

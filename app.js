@@ -6,6 +6,8 @@
   const STORAGE_KEY = "planfit:lastInput";
   // 相談メモ用：各診断の最新結果（1行ずつ）
   const memoState = { plan: null, safety: null, contract: null };
+  // 診断書用：各診断の最新結果
+  const reportState = { plan: null, safety: null, contract: null };
 
   function readInput() {
     const carrier = (document.querySelector("input[name=carrier]:checked") || {}).value || "その他";
@@ -121,6 +123,7 @@
 
   function run(input, { scroll = true } = {}) {
     const r = PlanFit.diagnose(input, PLANS, TYPICAL_PRICE);
+    reportState.plan = { input, r };
     memoState.plan = [
       "・利用中：" + input.carrier + "（月額 約" + yen(r.current) + (r.currentEstimated ? "・推定" : "") + "）",
       "・料金プラン診断のおすすめ：" + r.best.plan.brand + "「" + r.best.plan.name + "」約" + yen(r.best.total) + "/月"
@@ -205,6 +208,7 @@
       return;
     }
     const r = Checks.scoreSafety(answers);
+    reportState.safety = r;
     const color = r.urgent || r.score < 50 ? "#e5484d" : r.score < 80 ? "var(--orange)" : "var(--green)";
     const msg = {
       "至急対応": "被害につながるおそれがあります。下の対応を今すぐ行ってください。",
@@ -273,6 +277,102 @@
     return lines.join("\n");
   }
 
+  // ── 自由入力の契約 ─────────────────────────
+  let customSeq = 0;
+  function addCustomRow() {
+    const row = document.createElement("div");
+    row.className = "custom-row";
+    const n = ++customSeq;
+    row.innerHTML = `<input type="text" class="c-name" maxlength="40" placeholder="サービス名（例：動画サービス）" aria-label="サービス名 ${n}">
+      <input type="number" class="c-fee" min="0" max="100000" step="10" inputmode="numeric" placeholder="月額 円" aria-label="月額 ${n}">
+      <select class="c-status" aria-label="状況 ${n}"><option value="unknown">わからない</option><option value="using">使っている</option><option value="unused">使っていない</option></select>
+      <button type="button" class="remove" aria-label="この行を削除">×</button>`;
+    row.querySelector(".remove").addEventListener("click", () => row.remove());
+    $("customContracts").appendChild(row);
+    return row;
+  }
+
+  function readCustom() {
+    return [...document.querySelectorAll("#customContracts .custom-row")].map(row => ({
+      name: row.querySelector(".c-name").value,
+      fee: row.querySelector(".c-fee").value,
+      status: row.querySelector(".c-status").value
+    }));
+  }
+
+  // ── 診断書（印刷・PDF保存） ─────────────────
+  function buildReport() {
+    const today = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+    const li = arr => arr.length ? `<ul>${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p class='meta'>なし</p>";
+    const parts = [`<h1>スマホ診断書</h1><p class="meta">作成日：${today}　／　本人と相談員で内容を確認してください</p>`];
+    const P = reportState.plan;
+    if (P) {
+      const b = P.r.best;
+      parts.push(`<div class="box"><h2>① 料金プラン診断</h2><table>
+        <tr><th>利用中</th><td>${esc(P.input.carrier)}（月額 約${yen(P.r.current)}${P.r.currentEstimated ? "・推定" : ""}）</td></tr>
+        <tr><th>おすすめ</th><td>${esc(b.plan.brand)}「${esc(b.plan.name)}」約${yen(b.total)}/月</td></tr>
+        <tr><th>見直し効果</th><td>${P.r.alreadyOptimal ? "今のプランがすでにお得" : `月 約${yen(P.r.saving)}／年 約${yen(P.r.saving * 12)}`}</td></tr>
+        <tr><th>ほかの候補</th><td>${P.r.ranked.slice(1).map(x => esc(x.plan.brand + "「" + x.plan.name + "」約" + yen(x.total) + "/月")).join("<br>") || "なし"}</td></tr>
+      </table></div>`);
+    }
+    const S = reportState.safety;
+    if (S) {
+      parts.push(`<div class="box"><h2>② スマホ安全診断　${S.score}点（${esc(S.rank)}）</h2>
+        ${S.urgent ? `<p><b>至急：</b>${Checks.URGENT_STEPS.map(esc).join("／")}</p>` : ""}
+        <table><tr><th>要対策</th><td>${li(S.actions.map(q => q.title))}</td></tr>
+        <tr><th>要確認（わからない）</th><td>${li(S.checks.map(q => q.title))}</td></tr></table></div>`);
+    }
+    const C = reportState.contract;
+    if (C) {
+      const fee = i => i.min === i.max ? "月 " + yen(i.min) : "月 " + yen(i.min) + "〜" + yen(i.max);
+      parts.push(`<div class="box"><h2>③ スマホ契約診断</h2><table>
+        <tr><th>解約・見直し候補</th><td>${li(C.unused.map(i => i.name + "（" + fee(i) + (i.custom ? "・実額" : "・目安") + "）"))}${C.unused.length ? `<p class="meta">合計 ${C.saveMin === C.saveMax ? "月 " + yen(C.saveMin) : "月 " + yen(C.saveMin) + "〜" + yen(C.saveMax)}（削減確定額ではありません）</p>` : ""}</td></tr>
+        <tr><th>要確認（わからない）</th><td>${li(C.unknown.map(i => i.name))}</td></tr>
+        <tr><th>使っている（継続）</th><td>${li(C.using.map(i => i.name))}</td></tr></table></div>`);
+      const bring = Checks.bringList(C);
+      parts.push(`<div class="box"><h2>相談会の持ち物チェック</h2><ul style="list-style:none;padding-left:0">${bring.map(i =>
+        `<li><span class="check"></span>${i.focus ? "★ " : ""}${esc(i.name)}</li>`).join("")}</ul></div>`);
+    }
+    const picked = [...document.querySelectorAll("#troubleOptions input:checked")].map(x => x.value);
+    if (picked.length) parts.push(`<div class="box"><h2>相談したいこと</h2>${li(picked)}</div>`);
+    if (!P && !S && !C && !picked.length) parts.push("<p>まだ診断が行われていません。</p>");
+    parts.push(`<div class="foot">料金は公式サイト確認時点の参考値で、割引・キャンペーン・端末代・通話料等により実際の負担は変わります。安全診断は情報漏えいや不正利用がないことを保証するものではありません。
+      この診断書には氏名・電話番号・パスワードは記載していません。<br>スマホ相談窓口　https://planfit.vercel.app/</div>`);
+    $("report").innerHTML = parts.join("");
+  }
+
+  function printReport() {
+    if (!reportState.plan && !reportState.safety && !reportState.contract) {
+      toast("先にいずれかの診断を行ってください");
+      return;
+    }
+    buildReport();
+    window.print();
+  }
+
+  // ── 全入力を消去（共有端末向け） ─────────────
+  function clearAll() {
+    if (!window.confirm("すべての入力と診断結果を消去しますか？\n元に戻すことはできません。")) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* 無視 */ }
+    document.querySelectorAll("main input[type=radio], main input[type=checkbox]").forEach(x => { x.checked = false; });
+    document.querySelector('input[name=carrier][value="ドコモ"]').checked = true;
+    $("currentPrice").value = "";
+    $("data").value = "30";
+    $("call").value = "none";
+    syncPriceField();
+    $("customContracts").innerHTML = "";
+    addCustomRow();
+    document.querySelectorAll(".q.missing").forEach(x => x.classList.remove("missing"));
+    ["result", "safetyResult", "contractResult"].forEach(id => $(id).classList.remove("show"));
+    ["safetyResult", "contractResult", "plans", "summary", "cheapestNote", "report"].forEach(id => { $(id).innerHTML = ""; });
+    Object.keys(memoState).forEach(k => { memoState[k] = null; reportState[k] = null; });
+    updateMemo();
+    history.replaceState(null, "", location.pathname);
+    showTab("plan", { updateHash: false });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    toast("すべての入力を消去しました");
+  }
+
   function runContract() {
     const { answers, missing } = collect($("contractItems"), "c_", Checks.CONTRACT_ITEMS.map(i => i.id));
     if (missing.length) {
@@ -280,7 +380,8 @@
       missing[0].scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    const r = Checks.evaluateContract(answers);
+    const r = Checks.evaluateContract(answers, readCustom());
+    reportState.contract = r;
     const range = (a, b) => a === b ? "約" + yen(a) : "約" + yen(a) + "〜" + yen(b);
     const summary = r.unused.length
       ? `<div class="summary"><div class="small">使っていない契約を見直すと</div>
@@ -314,6 +415,11 @@
     $("copyMemo").addEventListener("click", () => copy($("memoText").textContent, "相談メモをコピーしました"));
     document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
     renderSafetyQuestions();
+    addCustomRow();
+    $("addCustom").addEventListener("click", () => addCustomRow().querySelector(".c-name").focus());
+    $("printReport").addEventListener("click", printReport);
+    $("clearAll").addEventListener("click", clearAll);
+    window.addEventListener("beforeprint", buildReport);
     renderContractItems();
     $("safetyBtn").addEventListener("click", runSafety);
     $("contractBtn").addEventListener("click", runContract);
