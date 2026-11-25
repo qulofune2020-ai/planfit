@@ -104,30 +104,24 @@ const PLANS = [
     store: true, family: true, quality: true, senior: true,
     officialUrl: "https://www.softbank.jp/mobile/price_plan/data/teigaku-museigen/", checkedAt: "2026-11-25"
   },
-  // ── LINEMO（公式サイトに自動アクセスできず、二次情報で確認）──
+  // ── LINEMO（基本料金は公式サイトで確認済み）──
   {
     brand: "LINEMO", name: "LINEMO ベストプラン（3GB）", price: 990, data: 3,
     callIncluded: "none", callOptions: { short: 550, unlimited: 1650 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25",
-    note: "料金は公式サイトで要確認",
-    verified: false
+    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25"
   },
   {
     brand: "LINEMO", name: "LINEMO ベストプラン（10GB）", price: 2090, data: 10,
     callIncluded: "none", callOptions: { short: 550, unlimited: 1650 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25",
-    note: "料金は公式サイトで要確認",
-    verified: false
+    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25"
   },
   {
     brand: "LINEMO", name: "LINEMO ベストプランV（30GB）", price: 2970, data: 30,
     callIncluded: "5min", callOptions: { short: 0, unlimited: 1100 },
     store: false, family: false, quality: true, senior: false,
-    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25",
-    note: "料金は公式サイトで要確認",
-    verified: false
+    officialUrl: "https://www.linemo.jp/plan/", checkedAt: "2026-11-25"
   },
   // ── Y!mobile（基本料金は公式サイトで確認済み）──
   {
