@@ -75,7 +75,7 @@ select,input[type=number]{
   border:1px solid #cfe1f6;border-radius:20px;padding:24px;text-align:center
 }
 .summary .small{color:var(--muted)}
-.big{font-size:2.4rem;font-weight:950;color:var(--green);margin:7px 0}
+.big{font-size:clamp(1.7rem,8vw,2.4rem);white-space:nowrap;font-weight:950;color:var(--green);margin:7px 0}
 .year{font-size:1.15rem;font-weight:900;color:var(--navy)}
 .compare{
   width:100%;border-collapse:separate;border-spacing:0;margin:18px 0 4px;
@@ -117,6 +117,40 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
   .plan-head{display:block}.price{margin-top:8px}
   .compare th,.compare td{padding:10px 6px;font-size:.9rem}
 }
+
+.brand-option:has(input:checked),.option:has(input:checked){border-color:var(--blue);background:var(--blue2);font-weight:800}
+.unknown{display:flex;align-items:center;gap:8px;font-weight:600;margin:10px 0 0;font-size:.9rem;color:var(--muted)}
+.unknown input{width:auto;margin:0}
+input[type=number]:disabled{background:#f1f5f9;color:#9aa9ba}
+.estimate-note{font-size:.78rem;color:var(--danger);margin-top:6px}
+.optimal{background:#effaf4;border:1px solid #bfe7d1;border-radius:20px;padding:22px;text-align:center;color:var(--green);font-weight:900;line-height:1.7}
+.optimal small{display:block;color:var(--muted);font-weight:600}
+.five{display:inline-block;margin-top:10px;background:#fff;border:1px solid #cfe1f6;border-radius:999px;padding:6px 14px;font-weight:800;color:var(--navy);font-size:.9rem}
+.bars{margin:18px 0 6px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 90px;gap:10px;align-items:center;margin:8px 0;font-size:.88rem}
+.bar-track{background:#eef3f8;border-radius:999px;height:14px;overflow:hidden}
+.bar{height:100%;border-radius:999px;transition:width .8s ease}
+.bar.now{background:#b8c6d6}.bar.rec{background:linear-gradient(90deg,#2fb57d,#138a5b)}
+.bar-val{text-align:right;font-weight:800;color:var(--navy)}
+.plan-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:.72rem;font-weight:800;padding:4px 9px;border-radius:999px}
+.chip.same{background:#fff4e5;color:#9a5a12}.chip.save{background:#e8f7ef;color:var(--green)}
+.reason-list,.caution-list{margin:12px 0 0;padding-left:1.2em;line-height:1.7;font-size:.9rem}
+.reason-list{color:var(--text)}.caution-list{color:var(--danger)}
+.caution-list li::marker{content:"⚠ "}
+.official{display:inline-block;margin-top:12px;font-size:.86rem;font-weight:800;color:var(--blue);text-decoration:none}
+.official:hover{text-decoration:underline}
+.cheapest-note{margin-top:14px;font-size:.85rem;background:#f8fbff;border:1px solid var(--line);border-radius:12px;padding:12px;color:var(--muted)}
+.share{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.share button,.share a{border:1px solid var(--line);background:#fff;border-radius:11px;padding:11px 6px;font-weight:800;color:var(--navy);cursor:pointer;text-align:center;text-decoration:none;font-size:.86rem}
+.share a.line{background:#06c755;color:#fff;border-color:#06c755}
+.memo{display:none;margin-top:16px;background:#f8fbff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.memo.show{display:block}
+.memo pre{white-space:pre-wrap;font-family:inherit;margin:0 0 10px;font-size:.88rem;line-height:1.7}
+.memo button{border:0;background:var(--navy);color:#fff;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-weight:800;font-size:.88rem;opacity:0;transition:.25s;pointer-events:none;z-index:10}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:600px){.share{grid-template-columns:1fr}.bar-row{grid-template-columns:62px 1fr 80px}}
 </style>
 </head>
 <body>
@@ -151,7 +185,8 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
   </div>
 
   <label>現在の月額料金 <span class="help">端末代を除く概算</span></label>
-  <input id="currentPrice" type="number" min="0" step="100" value="7000">
+  <input id="currentPrice" type="number" min="0" step="100" value="7000" inputmode="numeric">
+  <label class="unknown"><input type="checkbox" id="priceUnknown">わからない（ブランドと使い方から推定する）</label>
 
   <label>月間データ使用量</label>
   <select id="data">
@@ -182,27 +217,34 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
     <label class="option"><input type="checkbox" value="senior">60歳以上・シニア向け</label>
     <label class="option"><input type="checkbox" value="unlimited">かけ放題を重視</label>
   </div>
-  <button class="btn" onclick="diagnose()">診断結果を見る</button>
+  <button class="btn" id="diagnoseBtn" type="button">診断結果を見る</button>
 </section>
 
 <section id="result" class="result">
   <div class="card">
     <div class="step">RESULT</div>
     <h2>あなたの診断結果</h2>
-    <div class="summary">
-      <div class="small">現在の料金から</div>
-      <div class="big" id="monthlySave">月額 約0円</div>
-      <div class="year" id="annualSave">年間 約0円</div>
-      <div class="small">下げられる可能性があります</div>
+    <div id="summary"></div>
+
+    <div class="bars" aria-hidden="true">
+      <div class="bar-row"><span>現在</span><div class="bar-track"><div class="bar now" id="barNow"></div></div><span class="bar-val" id="currentMonthly">0円</span></div>
+      <div class="bar-row"><span>おすすめ</span><div class="bar-track"><div class="bar rec" id="barRec"></div></div><span class="bar-val" id="recommendedMonthly">0円</span></div>
     </div>
 
     <table class="compare" aria-label="現在料金とおすすめ料金の比較">
       <tr><th></th><th>現在</th><th>おすすめ</th></tr>
-      <tr><th>月額</th><td id="currentMonthly">0円</td><td id="recommendedMonthly">0円</td></tr>
+      <tr><th>月額</th><td id="currentMonthlyT">0円</td><td id="recommendedMonthlyT">0円</td></tr>
       <tr><th>年間</th><td id="currentAnnual">0円</td><td id="recommendedAnnual">0円</td></tr>
     </table>
 
     <div id="plans"></div>
+    <div id="cheapestNote"></div>
+
+    <div class="share">
+      <button type="button" id="copyLink">結果のURLをコピー</button>
+      <a class="line" id="lineShare" target="_blank" rel="noopener">LINEで送る</a>
+      <button type="button" id="retry">条件を変えて再診断</button>
+    </div>
     <p class="notice">表示料金は診断用の概算です。割引、通話料、端末代、キャンペーン、利用条件により実際の料金は異なります。契約前に各社公式サイトまたは店舗で必ず確認してください。</p>
   </div>
 
@@ -210,17 +252,21 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
     <div class="step">SMARTPHONE SUPPORT</div>
     <h2>料金以外のお困りごとも相談できます</h2>
     <div class="support-intro">実際には、料金見直しよりも「設定」「ログイン」「ID・パスワード整理」の相談が多く寄せられます。</div>
-    <div class="trouble">
-      <label class="option"><input type="checkbox">LINEの使い方</label>
-      <label class="option"><input type="checkbox">Wi-Fiにつながらない</label>
-      <label class="option"><input type="checkbox">詐欺SMS・セキュリティ</label>
-      <label class="option"><input type="checkbox">機種変更・データ移行</label>
-      <label class="option"><input type="checkbox">スマホが遅い・充電が減る</label>
-      <label class="option"><input type="checkbox">写真・バックアップ整理</label>
-      <label class="option"><input type="checkbox">ID・パスワードを忘れた</label>
-      <label class="option"><input type="checkbox">ID・パスワードを整理したい</label>
-      <label class="option"><input type="checkbox">ログインできない</label>
-      <label class="option"><input type="checkbox">登録サービスがわからない</label>
+    <div class="trouble" id="troubleOptions">
+      <label class="option"><input type="checkbox" value="LINEの使い方">LINEの使い方</label>
+      <label class="option"><input type="checkbox" value="Wi-Fiにつながらない">Wi-Fiにつながらない</label>
+      <label class="option"><input type="checkbox" value="詐欺SMS・セキュリティ">詐欺SMS・セキュリティ</label>
+      <label class="option"><input type="checkbox" value="機種変更・データ移行">機種変更・データ移行</label>
+      <label class="option"><input type="checkbox" value="スマホが遅い・充電が減る">スマホが遅い・充電が減る</label>
+      <label class="option"><input type="checkbox" value="写真・バックアップ整理">写真・バックアップ整理</label>
+      <label class="option"><input type="checkbox" value="ID・パスワードを忘れた">ID・パスワードを忘れた</label>
+      <label class="option"><input type="checkbox" value="ID・パスワードを整理したい">ID・パスワードを整理したい</label>
+      <label class="option"><input type="checkbox" value="ログインできない">ログインできない</label>
+      <label class="option"><input type="checkbox" value="登録サービスがわからない">登録サービスがわからない</label>
+    </div>
+    <div class="memo" id="memo">
+      <pre id="memoText"></pre>
+      <button type="button" id="copyMemo">相談メモをコピー</button>
     </div>
   </div>
 
@@ -228,9 +274,11 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
     <h2>一人で決めるのが不安な方へ</h2>
     <p>料金見直し、契約手続き、初期設定、データ移行、ID・パスワード整理まで、スマホ相談窓口で一緒に確認します。</p>
     <a href="https://skyseben-mobile-oomiya.com/" target="_blank" rel="noopener">スマホ相談窓口を確認する</a>
-    <small>料金以外の相談も承ります</small>
+    <small id="ctaNote">料金以外の相談も承ります</small>
   </div>
 </section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <footer>
   本診断は一般的な利用条件に基づく参考情報です。<br>
@@ -241,86 +289,7 @@ footer{text-align:center;color:var(--muted);font-size:.75rem;line-height:1.8;mar
 
 <script src="plans.js"></script>
 <script src="version.js"></script>
-<script>
-function selectedPrefs(){
-  return [...document.querySelectorAll('#preferenceOptions input[type=checkbox]:checked')]
-    .map(x=>x.value);
-}
-
-function diagnose(){
-  const current=Number(document.getElementById('currentPrice').value)||0;
-  const data=Number(document.getElementById('data').value);
-  const call=document.getElementById('call').value;
-  const prefs=selectedPrefs();
-
-  let list=PLANS.filter(p=>p.data>=data);
-  if(!list.length) list=PLANS.filter(p=>p.data===999);
-
-  list=list.map(p=>{
-    let score=10000-p.price;
-    if(prefs.includes('cheap')) score+=Math.max(0,5000-p.price);
-    if(prefs.includes('store')&&p.store) score+=3500;
-    if(prefs.includes('family')&&p.family) score+=1800;
-    if(prefs.includes('quality')&&p.quality) score+=1300;
-    if(prefs.includes('senior')&&p.senior) score+=2500;
-    if(prefs.includes('unlimited')&&p.call==="many") score+=2500;
-    if(call===p.call) score+=1000;
-    return {...p,score};
-  }).sort((a,b)=>b.score-a.score).slice(0,3);
-
-  const best=list[0];
-  const save=Math.max(0,current-best.price);
-
-  document.getElementById('monthlySave').textContent=
-    "月額 約"+save.toLocaleString()+"円";
-  document.getElementById('annualSave').textContent=
-    "年間 約"+(save*12).toLocaleString()+"円";
-  document.getElementById('currentMonthly').textContent=
-    current.toLocaleString()+"円";
-  document.getElementById('recommendedMonthly').textContent=
-    best.price.toLocaleString()+"円";
-  document.getElementById('currentAnnual').textContent=
-    (current*12).toLocaleString()+"円";
-  document.getElementById('recommendedAnnual').textContent=
-    (best.price*12).toLocaleString()+"円";
-
-  const box=document.getElementById('plans');
-  box.innerHTML=list.map((p,i)=>{
-    const reasons=[];
-    if(p.store) reasons.push("店舗で相談しやすい");
-    if(p.family) reasons.push("家族利用と相性がよい");
-    if(p.quality) reasons.push("大手キャリア回線");
-    if(p.senior) reasons.push("対面サポートを重視する方に向く");
-    if(!p.store) reasons.push("オンライン手続きで料金を抑えやすい");
-
-    return `<div class="plan ${i===0?'best':''}">
-      <div class="rank">${i===0?'おすすめ1位':'おすすめ'+(i+1)+'位'}</div>
-      <div class="plan-head">
-        <div>
-          <h3>${p.brand}</h3>
-          <div>${p.name}</div>
-        </div>
-        <div class="price">約${p.price.toLocaleString()}円/月</div>
-      </div>
-      <p class="reason">${reasons.slice(0,3).join("・")}</p>
-      <div class="tags">
-        ${p.store?'<span class="tag">店舗対応</span>':''}
-        ${p.family?'<span class="tag">家族向け</span>':''}
-        ${p.senior?'<span class="tag">シニア向け</span>':''}
-        ${p.quality?'<span class="tag">大手回線</span>':''}
-      </div>
-    </div>`;
-  }).join("");
-
-  document.getElementById('result').classList.add('show');
-  document.getElementById('result').scrollIntoView({behavior:'smooth'});
-}
-
-if(typeof APP_VERSION!=="undefined"){
-  document.getElementById("versionInfo").textContent =
-    "Version " + APP_VERSION.version +
-    "｜料金情報確認日：" + APP_VERSION.priceCheckedAt;
-}
-</script>
+<script src="diagnosis.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
