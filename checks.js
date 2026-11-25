@@ -192,7 +192,35 @@
     return items;
   }
 
-  const api = { SAFETY_QUESTIONS, URGENT_STEPS, scoreSafety, CONTRACT_ITEMS, CONTRACT_HOWTO, evaluateContract, bringList, BRING_NOTES };
+  // ── 相談会モード：公的な相談先 ─────────────────
+  const PUBLIC_CONTACTS = [
+    { name: "消費者ホットライン", tel: "188", when: "契約トラブル、身に覚えのない請求、詐欺の被害にあったかもしれないとき（最寄りの消費生活センターにつながります）" },
+    { name: "警察相談専用電話", tel: "#9110", when: "詐欺・不正アクセス・脅迫などの被害の相談（緊急のときは110番）" },
+    { name: "総務省 電気通信消費者相談センター", tel: "03-5253-5900", when: "携帯電話・インターネットの契約や解約についての相談（平日 9:30〜12:00、13:00〜17:00）" }
+  ];
+
+  // 相談会モード：診断結果から「ご本人が確認すること」を作る
+  // plan: diagnose() の結果（なければ null）、safety / contract も同様
+  function personTodo({ plan, safety, contract }) {
+    const todo = [];
+    if (plan) {
+      if (plan.currentEstimated) todo.push("請求書や明細で、今の毎月の料金を確認する");
+      if (!plan.alreadyOptimal) todo.push(`料金の候補（${plan.best.plan.brand}など）は、公式サイトや契約中の会社の窓口で最新の料金・条件を確かめてから考える`);
+    }
+    if (safety) {
+      safety.actions.forEach(q => todo.push(q.title));
+      safety.checks.forEach(q => todo.push(`未確認：${q.title}（できているか確かめる）`));
+    }
+    if (contract) {
+      contract.unused.forEach(i => todo.push(`${i.name}を本当に使っていないか確かめ、不要なら解約の手続きをする`));
+      contract.unknown.forEach(i => todo.push(`${i.name}に入っているか、請求明細やマイページで確かめる`));
+    }
+    return todo;
+  }
+
+  const TODO_NOTE = "契約の変更や解約は急がず、内容をよく確かめてから。わからないときは、ご家族や支援者と一緒に確認しましょう。";
+
+  const api = { SAFETY_QUESTIONS, URGENT_STEPS, scoreSafety, CONTRACT_ITEMS, CONTRACT_HOWTO, evaluateContract, bringList, BRING_NOTES, PUBLIC_CONTACTS, personTodo, TODO_NOTE };
   if (typeof module !== "undefined") module.exports = api;
   else root.Checks = api;
 })(this);

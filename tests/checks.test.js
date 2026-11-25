@@ -89,3 +89,22 @@ test("安全診断：未確認が残っていれば高得点でも「安心」�
   assert.strictEqual(r.rank, "未確認あり");
   assert.strictEqual(r.okCount, C.SAFETY_QUESTIONS.length - 1);
 });
+
+test("相談会モード：診断結果から「ご本人が確認すること」を作る", () => {
+  const safety = C.scoreSafety({ ...allSafe, lock: "no", perm: "unknown" });
+  const a = Object.fromEntries(C.CONTRACT_ITEMS.map(i => [i.id, "none"]));
+  const contract = C.evaluateContract({ ...a, catch: "unused", cloud: "unknown" });
+  const plan = { currentEstimated: true, alreadyOptimal: false, best: { plan: { brand: "ahamo" } } };
+  const todo = C.personTodo({ plan, safety, contract });
+  assert.ok(todo.some(t => t.includes("請求書")));
+  assert.ok(todo.some(t => t.includes("ahamo") && t.includes("公式サイト")));
+  assert.ok(todo.includes("画面ロックを設定する"));
+  assert.ok(todo.some(t => t.startsWith("未確認：") && t.includes("権限")));
+  assert.ok(todo.some(t => t.includes("割込通話") && t.includes("解約")));
+  assert.ok(todo.some(t => t.includes("クラウド容量") && t.includes("確かめる")));
+  assert.deepStrictEqual(C.personTodo({ plan: null, safety: null, contract: null }), []);
+});
+
+test("公的相談先は電話番号つき", () => {
+  assert.deepStrictEqual(C.PUBLIC_CONTACTS.map(c => c.tel), ["188", "#9110", "03-5253-5900"]);
+});
