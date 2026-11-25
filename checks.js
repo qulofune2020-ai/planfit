@@ -118,7 +118,7 @@
     { id: "security", name: "キャリアのセキュリティ・迷惑電話対策", min: 220, max: 550, hint: "スマホ標準の機能で代わりになる場合があります" },
     { id: "video", name: "動画配信（Netflix・Amazonプライム・Disney+ など）", min: 600, max: 2000, hint: "家族で重複して契約していないか確認" },
     { id: "music", name: "音楽配信（Spotify・Apple Music・YouTube Premium など）", min: 980, max: 1500, hint: "無料体験から自動で有料になっていないか確認" },
-    { id: "books", name: "雑誌・マンガ・電子書籍の読み放題", min: 400, max: 1000, hint: "契約時に一緒に入って、そのままのことが多いです" },
+    { id: "subscription", name: "月額プラン（サブスク）", min: 400, max: 1000, hint: "雑誌・マンガ・アプリなど、動画・音楽以外の月額サービス。契約時に一緒に入って、そのままのことが多いです" },
     { id: "cloud", name: "クラウド容量（iCloud+・Google One など）", min: 130, max: 1500, hint: "容量を使い切っていなければ下のプランに変更できます" },
     { id: "trial", name: "「最初の◯カ月無料」で入ったオプション", min: 300, max: 1000, hint: "無料期間が終わって課金が始まっていることがあります" },
     { id: "extraLine", name: "使っていない回線（タブレット・Wi-Fiルーター・古いスマホ）", min: 500, max: 3000, hint: "回線ごとに基本料がかかり続けます" }
