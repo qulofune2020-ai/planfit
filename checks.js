@@ -145,7 +145,38 @@
     return { unused, unknown, using, saveMin, saveMax };
   }
 
-  const api = { SAFETY_QUESTIONS, URGENT_STEPS, scoreSafety, CONTRACT_ITEMS, CONTRACT_HOWTO, evaluateContract };
+  // ── 相談会の持ち物 ─────────────────────────
+  // キャリア側で確認する項目／ストア・カード側で確認する項目
+  const CARRIER_ITEM_IDS = ["voicemail", "catch", "insurance", "security", "trial", "extraLine"];
+  const SUBS_ITEM_IDS = ["video", "music", "subscription", "cloud"];
+
+  const BRING_NOTES = [
+    "パスワードはご自身で入力していただきます。スタッフがお聞きしたり、メモしたりすることはありません。",
+    "ID・パスワードがわからない方もご相談ください。再設定のお手伝いをします。"
+  ];
+
+  // level: "must" 必ず／"recommend" あれば／"ifNeeded" その場で手続きするなら
+  // focus: 「わからない」の確認に特に必要
+  function bringList(r) {
+    const unknown = new Set(r.unknown.map(i => i.id));
+    const carrierUnknown = CARRIER_ITEM_IDS.some(id => unknown.has(id));
+    const subsUnknown = SUBS_ITEM_IDS.some(id => unknown.has(id));
+    const items = [
+      { name: "スマホ本体（充電しておく）", why: "ログインの確認コードがSMSで届きます。サブスクの一覧もスマホで確認できます", level: "must", focus: false },
+      { name: "キャリアのマイページのID・パスワード（My docomo／My au／My SoftBank など）", why: "オプション契約の確認・解約に使います", level: "must", focus: carrierUnknown },
+      { name: "ネットワーク暗証番号（4桁）", why: "契約時に決めた数字です。マイページの操作や手続きで聞かれます", level: "must", focus: carrierUnknown },
+      { name: "毎月の請求書・利用明細（紙、またはアプリの画面）", why: "月額とオプションの内訳がひと目でわかります", level: "recommend", focus: carrierUnknown },
+      { name: "契約時の書類（契約内容の控え）", why: "加入したオプションと、無料期間の終了日がわかります", level: "recommend", focus: unknown.has("trial") || unknown.has("insurance") },
+      { name: "クレジットカードの利用明細", why: "キャリア以外のサブスクの引き落としを見つけられます", level: "recommend", focus: subsUnknown },
+      { name: "Apple ID／Googleアカウントのパスワード", why: "サブスクやクラウド容量の確認・変更で入力を求められることがあります", level: "recommend", focus: subsUnknown }
+    ];
+    if (r.unused.length) {
+      items.push({ name: "本人確認書類（運転免許証・マイナンバーカードなど）", why: "その場で解約・プラン変更まで進める場合に必要です", level: "ifNeeded", focus: false });
+    }
+    return items;
+  }
+
+  const api = { SAFETY_QUESTIONS, URGENT_STEPS, scoreSafety, CONTRACT_ITEMS, CONTRACT_HOWTO, evaluateContract, bringList, BRING_NOTES };
   if (typeof module !== "undefined") module.exports = api;
   else root.Checks = api;
 })(this);
